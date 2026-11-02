@@ -1,0 +1,24 @@
+{
+  "name": "mcp-lectures",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "mcp": "node mcp-server/server.js"
+  },
+  "description": "This repository is your workspace for the whole course: Exercise 1 in `mcp-server/`, and your project (Exercises 2–5) in the rest of it. Everything runs in your browser through GitHub Codespaces, so nothing needs to be installed on your laptop.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lost-in-paradise/webdev-121326019.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lost-in-paradise/webdev-121326019/issues"
+  },
+  "homepage": "https://github.com/lost-in-paradise/webdev-121326019#readme"
+}

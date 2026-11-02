@@ -1,0 +1,54 @@
+[
+    {
+      "name": "Ivan Ivanov",
+      "course": "Agent anatomy and MCP",
+      "room": 1710
+    },
+    {
+      "name": "Ivan Georgiev",
+      "course": "Context and specs",
+      "room": 1706
+    },
+    {
+      "name": "Petar Ivanov",
+      "course": "How models and agents work",
+      "room": 1705
+    },
+    {
+      "name": "Petar Petrov",
+      "course": "Autonomy and collaboration",
+      "room": 1715
+    },
+
+
+    {
+      "name": "Georgi Georgiev",
+      "course": "What the agent built, part 1",
+      "room": 1724
+    },
+    {
+      "name": "Vasko Vasilev",
+      "course": "What the agent built, part 2",
+      "room": 1704
+    },
+    {
+      "name": "Martin Vasilev",
+      "course": "Evaluating output",
+      "room": 1717
+    },
+    {
+      "name": "Blagoi Ivanov",
+      "course": "Testing and security of generated code",
+      "room": 1707
+    },
+    {
+      "name": "Vasil Ivanov",
+      "course": "Working in someone else's codebase",
+      "room": 1718
+    },
+    {
+      "name": "Mario Vasilev",
+      "course": "Inference economics and project defenses",
+      "room": 1725
+    }
+]
