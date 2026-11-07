@@ -4,6 +4,6 @@ One row per agent session. In Gemini CLI, type `/stats` before you quit and copy
 
 | Date | Tool | Input tokens | Output tokens | Credits (if no tokens) | List-price cost |
 |---|---|---|---|---|---|
- 02.11.2026 | gemini-3.5-flash-lite              5        30,616        10,146           150                                │
-│    ↳ main                           2        25,132        10,146            50                                │
-│    ↳ utility_router                 3         5,484             0           100
+| 2026-11-02 | gemini-3.5-flash-lite | 30,616 | 10,146 |---|---|
+| 2026-11-07 | gemini-3.5-flash-lite | 446,495 | 344,848 |---|---|
+| 2026-11-07 | gemini-3.5-flash-lite | 1,299,250 | 1,122,732 |---|---|
