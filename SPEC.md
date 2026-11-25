@@ -18,6 +18,8 @@ Club events.
 - An organizer sees who has signed up for their event.
 - Each event in the list shows its title, date and free places.
 - The details of an event shows its title, date, time, location, description, and free places.
+- An admin changes a user's role between member and organizer.
+- An admin edits or cancels any event, sees who has signed up for it, and removes a member from it.
 
 ## Non-goals
 - No payments: every event is free.
@@ -28,10 +30,12 @@ Club events.
 - No creation of events by members, only by organizers.
 - No cancellation of events by members, only by organizers.
 - No waitlists: when an event is full, registration is strictly refused without queuing or automatic sign-up.
+- No admin sign-up: the admin account exists only from the seed data, and no one can be given the admin role through the UI.
 
 ## Constraints
 - Node with Express, PostgreSQL, plain HTML and JavaScript in the UI.
 - Passwords are stored only as a hash, never as readable text.
+- An event has one start column, starts_at timestamptz; there are no separate date and time columns. The UI shows date and time taken from it.
 
 ## The model feature
 <!-- Which model, which modality, and what it does for a user.
@@ -49,6 +53,7 @@ Club events.
 - Local: e-mail and password, stored as a bcrypt hash.
 - Provider: Sign in with Google, the authorization-code flow, on the server.
 - Linking: matched on Google's account id. An address Google has not marked as verified is never linked to an existing account.
+- Roles: member, organizer, admin. Every new account is a member. The role is read from `users` on every request, so a change takes effect on the next page load.
 
 ## MCP tools
 <!-- At least three tools your own MCP server exposes over this project's data.
@@ -67,8 +72,8 @@ Screens:
 - `/login`: Log in and sign up the user with e-mail and password or Google account.
 - `/events`: Shows the upcoming events, soonest first, each with its title, date and number of free places.
 - `/event-details`: Shows a title, date, time, location, description, number of free places and member status(signup or not for the event). Used by members to see details about the event. Details are retrieve by event_id. Member can signup or withdraw on this screen.
-- `/event`: Use to create, edit or cancel an event. Can be used only by organizers. Can not be used by members.
-- `/event-signups`: Organizers can see a list with signed-up members for their own event and remove a member from it. Can be used only by organizers. Can not be used by members.
+- `/event`: Use to create, edit or cancel an event. Used by organizers for their own events and by admins for any event. Can not be used by members.
+- `/event-signups`: Organizers can see a list with signed-up members for their own event and remove a member from it. Used by organizers for their own events and by admins for any event. Can not be used by members.
 
 ## Architecture
 <!-- Exercise 3. One request traced through every layer, naming the file for each one,
@@ -81,44 +86,46 @@ Screens:
 
 ### Slice 1: sign-in and the upcoming events list
 - [AC-1] A visitor who opens `/events` without signing in lands on `/login` instead.
-- [AC-2] After signing in with a seeded account, `/events` shows the upcoming events, each with its title, date and number of free places, soonest first.
+- [AC-2] After signing in with a seeded account, `/events` shows the upcoming events, each with its title, date and number of free places(equal to the limit while no one has signed up), soonest first.
 - [AC-3] A visitor whose verified Google address matches no account clicks "Sign in with Google" on `/login`, lands on `/events`, and one new row appears in `users` with that e-mail, the Google id, role `member`.
 - [AC-4] A member with a local account signs in with Google for the first time using the same verified address, lands on `/events`, their existing `users` row now has the Google id, and no new row appears in `users`.
 - [AC-5] A user whose Google id is already stored signs in with Google and lands on `/events` as the same account, and the number of rows in `users` is unchanged.
 - [AC-6] A visitor whose Google address is not verified sees "Your Google address is not verified.", stays on `/login`, and no row is created or changed in `users`.
 - [AC-7] Deleting one event row in the database and reloading `/events` removes that event from the screen.
-- [AC-8] After a past event row and a later upcoming event row are added to the database, a member reloading `/events` does not see the past event, and upcoming events are listed soonest first.
+- [AC-8] After a past event row and a later upcoming event row are added to the database, a member reloading `/events` does not see the past event(one whose start time is before now), and upcoming events are listed soonest first.
+- [AC-9] A visitor who signs in with a wrong password sees "Wrong e-mail or password", stays on /login, and no session is created.
+- [AC-10] A visitor who signs up with a new e-mail and password lands on `/events`, one new row appears in users with role member, and its password_hash is not the password as typed.
 
 ### Slice 2: signing up for an event
-- [AC-9] A member who signs up for an upcoming event with free places sees "You are signed up", and exactly one new row with their user id and the event id appears in `registrations`.
-- [AC-10] A member who signs up for an event with no free places sees "This event is full", and no new row appears in `registrations`.
-- [AC-11] A member who signs up for an event they have already joined sees "You are already signed up", and the number of rows in `registrations` for that member and event stays at 1.
-- [AC-12] When two members submit sign-ups at the same time for an event with one free place, one sees "You are signed up" and the other sees "This event is full", and exactly one new row appears in `registrations`.
-- [AC-13] A member who tries to sign up for an event that has already started sees "This event has already started", and no new row appears in `registrations`.
+- [AC-11] A member who signs up for an upcoming event with free places sees "You are signed up", and exactly one new row with their user id and the event id appears in `registrations`.
+- [AC-12] A member who signs up for an event with no free places sees "This event is full", and no new row appears in `registrations`.
+- [AC-13] A member who signs up for an event they have already joined sees "You are already signed up", and the number of rows in `registrations` for that member and event stays at 1.
+- [AC-14] When two members submit sign-ups at the same time for an event with one free place, one sees "You are signed up" and the other sees "This event is full", and exactly one new row appears in `registrations`.
+- [AC-15] A member who tries to sign up for an event that has already started sees "This event has already started", and no new row appears in `registrations`.
 
 ### Slice 3: event details and withdrawing
-- [AC-14] A member who opens `/event-details` sees a title, date, time, location, description, number of free places and member status(signup or not for the event).
-- [AC-15] A member who withdraws from an upcoming event sees "You have withdrawn", their row is removed from `registrations`, and the event's free places increase by 1.
-- [AC-16] A member who tries to withdraw from an event that has already started sees "This event has already started", and their row stays in `registrations`.
-- [AC-17] After a member withdraws from a full event, number of free places is increased by 1 and another member who signs up sees "You are signed up", and one new row with that member's user id and the event id appears in `registrations`.
+- [AC-16] A member who opens `/event-details` sees a title, date, time, location, description, number of free places and member status(signup or not for the event).
+- [AC-17] A member who withdraws from an upcoming event sees "You have withdrawn", their row is removed from `registrations`, and the event's free places increase by 1.
+- [AC-18] A member who tries to withdraw from an event that has already started sees "This event has already started", and their row stays in `registrations`.
+- [AC-19] After a member withdraws from a full event, number of free places is increased by 1 and another member who signs up sees "You are signed up", and one new row with that member's user id and the event id appears in `registrations`.
 
 ### Slice 4: creating events
-- [AC-18] An organizer who submits a valid new event with a limit of 10 places sees it in the events list, and one new row with `capacity` = 10 appears in `events`.
-- [AC-19] An organizer who submits a new event with a limit of 0 or less sees "Limit must be at least 1", and no new row appears in `events`.
-- [AC-20] An organizer who submits a new event with an empty title or a start time in the past sees a message naming the invalid field, and no new row appears in `events`.
-- [AC-21] A member who tries to create an event, open an event's sign-up list, or remove another member sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-20] An organizer who submits a valid new event with a limit of 10 places sees it in the events list, and one new row with `capacity` = 10 appears in `events`.
+- [AC-21] An organizer who submits a new event with a limit of 0 or less sees "Limit must be at least 1", and no new row appears in `events`.
+- [AC-22] An organizer who submits a new event with an empty title or a start time in the past sees a message naming the invalid field, and no new row appears in `events`.
+- [AC-23] A member who tries to create an event, open an event's sign-up list, or remove another member sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ### Slice 5: editing and cancelling events
-- [AC-22] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
-- [AC-23] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
-- [AC-24] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
-- [AC-25] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
-- [AC-26] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-24] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
+- [AC-25] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
+- [AC-26] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
+- [AC-27] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
+- [AC-28] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ### Slice 6: seeing sign-ups
-- [AC-27] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
-- [AC-28] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
-- [AC-29] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-29] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
+- [AC-30] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
+- [AC-31] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ## Traceability
 <!-- Filled in from Exercise 3 onward: each AC id, and the test that names it. -->
