@@ -19,3 +19,10 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: -
 - Went wrong: what didn't went wrong with gemini is the correct question here...
 - Changed by hand: wrote the teachers.json
+
+## 2026-11-26 · slice 1 creation
+- Goal: slice 1 creation
+- Delegated: creation of slice 1
+- Checkpoints: -
+- Went wrong: gemini connection, initial plan, tables creation
+- Changed by hand: some clarifications in the spec and postgre
