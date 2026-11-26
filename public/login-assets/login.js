@@ -1,8 +1,27 @@
+const signinSection = document.getElementById('signin-section');
+const signupSection = document.getElementById('signup-section');
+const errorDiv = document.getElementById('error-message');
+
+document.getElementById('to-signup').addEventListener('click', (e) => {
+  e.preventDefault();
+  errorDiv.textContent = '';
+  errorDiv.style.display = 'none';
+  signinSection.style.display = 'none';
+  signupSection.style.display = 'block';
+});
+
+document.getElementById('to-signin').addEventListener('click', (e) => {
+  e.preventDefault();
+  errorDiv.textContent = '';
+  errorDiv.style.display = 'none';
+  signupSection.style.display = 'none';
+  signinSection.style.display = 'block';
+});
+
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
-  const errorDiv = document.getElementById('error-message');
   errorDiv.style.display = 'none';
 
   try {
@@ -28,7 +47,6 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('signup-email').value;
   const password = document.getElementById('signup-password').value;
-  const errorDiv = document.getElementById('error-message');
   errorDiv.style.display = 'none';
 
   try {
