@@ -135,3 +135,7 @@ Screens:
 
 ## Spec vs result
 <!-- After the agent builds the slice: which criteria passed, which it missed or reinterpreted, and what you changed in this spec because of it. -->
+### Slice 1
+**Passed:* All criteria from Slice 1 have passed `npm test`: 10 passed.
+**What the agent missed, and what I did about it:**
+First few plans were incorrect and I've editted and committed changes into the spec. After the changes the plan was way more clearer and correct but still there were few "or"-s and incorrect choices during the slice creation for which I had to decide and instruct the agent manually. For example the agent decided to create the tables with missing columns, it stored the role in the session, added `"type": "module"` broke the Exercise 1 MCP server. Fixed with `mcp-server/package.json`. I set up PostgreSQL inside the Codespace.
