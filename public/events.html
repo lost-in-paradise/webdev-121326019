@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Events - Club Events</title>
+</head>
+<body>
+  <h1>Upcoming Events</h1>
+  <p>Welcome to Club Events!</p>
+  <button id="logout-btn">Log Out</button>
+  <script>
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      const data = await res.json();
+      if (data.redirect) {
+        window.location.href = data.redirect;
+      }
+    });
+  </script>
+</body>
+</html>
