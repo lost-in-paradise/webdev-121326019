@@ -3,6 +3,7 @@ import session from 'express-session';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
+import eventRoutes from './routes/events.js';
 import { findUserById } from './data/users.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -62,6 +63,9 @@ async function requireAuth(req, res, next) {
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
+
+// Event API routes
+app.use(requireAuth, eventRoutes);
 
 // Protected static files
 app.use(requireAuth, express.static(path.join(rootDir, 'public')));

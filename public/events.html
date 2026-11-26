@@ -4,12 +4,69 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Events - Club Events</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    .event-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
+    .event-title { font-weight: bold; font-size: 1.1em; }
+  </style>
 </head>
 <body>
   <h1>Upcoming Events</h1>
-  <p>Welcome to Club Events!</p>
-  <button id="logout-btn">Log Out</button>
+  <div id="events-container">Loading events...</div>
+  <button id="logout-btn" style="margin-top: 20px;">Log Out</button>
   <script>
+    async function loadEvents() {
+      const container = document.getElementById('events-container');
+      try {
+        const res = await fetch('/api/events');
+        const data = await res.json();
+        if (data.success && data.events) {
+          container.textContent = '';
+          if (data.events.length === 0) {
+            const p = document.createElement('p');
+            p.textContent = 'No upcoming events found.';
+            container.appendChild(p);
+            return;
+          }
+          data.events.forEach(ev => {
+            const card = document.createElement('div');
+            card.className = 'event-card';
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'event-title';
+            titleEl.textContent = ev.title;
+
+            const dateEl = document.createElement('div');
+            const dateStr = new Date(ev.starts_at).toLocaleString();
+            dateEl.textContent = `Date: ${dateStr}`;
+
+            const freeEl = document.createElement('div');
+            freeEl.textContent = `Free Places: ${ev.free_places}`;
+
+            const statusEl = document.createElement('div');
+            if (ev.status === 'cancelled') {
+              statusEl.textContent = 'Status: Cancelled';
+              statusEl.style.color = 'red';
+            }
+
+            card.appendChild(titleEl);
+            card.appendChild(dateEl);
+            card.appendChild(freeEl);
+            if (ev.status === 'cancelled') {
+              card.appendChild(statusEl);
+            }
+            container.appendChild(card);
+          });
+        } else {
+          container.textContent = 'Failed to load events.';
+        }
+      } catch (err) {
+        container.textContent = 'Error loading events.';
+      }
+    }
+
+    loadEvents();
+
     document.getElementById('logout-btn').addEventListener('click', async () => {
       const res = await fetch('/api/auth/logout', { method: 'POST' });
       const data = await res.json();

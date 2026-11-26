@@ -8,7 +8,7 @@
     "mcp": "node mcp-server/server.js",
     "seed": "node scripts/seed.js",
     "migrate": "node scripts/migrate.js",
-    "test": "node --test"
+    "test": "node --test --test-concurrency=1"
   },
   "description": "This repository is your workspace for the whole course: Exercise 1 in `mcp-server/`, and your project (Exercises 2–5) in the rest of it. Everything runs in your browser through GitHub Codespaces, so nothing needs to be installed on your laptop.",
   "main": "index.js",
