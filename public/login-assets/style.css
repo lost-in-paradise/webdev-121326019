@@ -9,3 +9,6 @@ button:hover { background: #0056b3; }
 .toggle-text { margin-top: 15px; text-align: center; }
 .toggle-text a { color: #007BFF; text-decoration: none; }
 .toggle-text a:hover { text-decoration: underline; }
+.google-auth-section { margin-top: 15px; text-align: center; }
+.google-btn { display: block; width: 100%; padding: 10px; background: #db4437; color: white; text-decoration: none; border-radius: 4px; box-sizing: border-box; text-align: center; }
+.google-btn:hover { background: #c23321; }

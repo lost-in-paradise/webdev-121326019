@@ -10,10 +10,19 @@ export async function findUserById(id) {
   return result.rows[0] || null;
 }
 
-export async function createUser({ email, passwordHash, role = 'member' }) {
+export async function findUserByGoogleId(googleId) {
+  const result = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+  return result.rows[0] || null;
+}
+
+export async function updateUserGoogleId(userId, googleId) {
+  await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, userId]);
+}
+
+export async function createUser({ email, passwordHash = null, googleId = null, role = 'member' }) {
   const result = await pool.query(
-    'INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3) RETURNING id, email, role, created_at, password_hash',
-    [email, passwordHash, role]
+    'INSERT INTO users (email, password_hash, google_id, role) VALUES ($1, $2, $3, $4) RETURNING id, email, role, created_at, password_hash, google_id',
+    [email, passwordHash, googleId, role]
   );
   return result.rows[0];
 }

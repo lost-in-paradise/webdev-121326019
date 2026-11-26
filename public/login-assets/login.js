@@ -2,6 +2,18 @@ const signinSection = document.getElementById('signin-section');
 const signupSection = document.getElementById('signup-section');
 const errorDiv = document.getElementById('error-message');
 
+const errorMap = {
+  unverified: 'Your Google address is not verified.',
+  google_failed: 'Google authentication failed',
+  invalid_state: 'Invalid authentication state'
+};
+const urlParams = new URLSearchParams(window.location.search);
+const errorCode = urlParams.get('error');
+if (errorCode && errorMap[errorCode]) {
+  errorDiv.textContent = errorMap[errorCode];
+  errorDiv.style.display = 'block';
+}
+
 document.getElementById('to-signup').addEventListener('click', (e) => {
   e.preventDefault();
   errorDiv.textContent = '';
