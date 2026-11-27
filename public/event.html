@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Create Event - Club Events</title>
+  <title id="page-title">Create Event - Club Events</title>
   <style>
     body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
     .form-group { margin-bottom: 15px; }
@@ -13,14 +13,15 @@
     }
     textarea { height: 100px; }
     #message-area { margin-bottom: 15px; font-weight: bold; color: red; }
-    button { padding: 8px 16px; cursor: pointer; }
+    button, .btn { padding: 8px 16px; cursor: pointer; margin-right: 10px; }
+    button#cancel-btn { background: #ffdddd; }
     a { display: inline-block; margin-top: 15px; text-decoration: none; color: #0066cc; }
   </style>
 </head>
 <body>
-  <h1>Create Event</h1>
+  <h1 id="heading-title">Create Event</h1>
   <div id="message-area"></div>
-  <form id="create-event-form">
+  <form id="event-form">
     <div class="form-group">
       <label for="title">Title</label>
       <input type="text" id="title" required>
@@ -45,12 +46,62 @@
       <label for="capacity">Limit on Places</label>
       <input type="number" id="capacity" min="1" required>
     </div>
-    <button type="submit">Save Event</button>
+    <button type="submit" id="submit-btn">Save Event</button>
+    <button type="button" id="cancel-btn" style="display: none;">Cancel Event</button>
   </form>
   <p><a href="/events">Back to Events</a></p>
 
   <script>
-    document.getElementById('create-event-form').addEventListener('submit', async (e) => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('id');
+
+    if (eventId) {
+      document.getElementById('page-title').textContent = 'Edit Event - Club Events';
+      document.getElementById('heading-title').textContent = 'Edit Event';
+      document.getElementById('submit-btn').textContent = 'Save Changes';
+      document.getElementById('cancel-btn').style.display = 'inline-block';
+
+      fetch(`/api/events/${eventId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.event) {
+            const ev = data.event;
+            document.getElementById('title').value = ev.title;
+            const startsAt = new Date(ev.starts_at);
+            const year = startsAt.getFullYear();
+            const month = String(startsAt.getMonth() + 1).padStart(2, '0');
+            const day = String(startsAt.getDate()).padStart(2, '0');
+            document.getElementById('date').value = `${year}-${month}-${day}`;
+            document.getElementById('time').value = startsAt.toTimeString().slice(0, 5);
+            document.getElementById('location').value = ev.location;
+            document.getElementById('description').value = ev.description;
+            document.getElementById('capacity').value = ev.capacity;
+          } else {
+            document.getElementById('message-area').textContent = data.error || 'Failed to load event for editing';
+          }
+        })
+        .catch(() => {
+          document.getElementById('message-area').textContent = 'Error loading event details';
+        });
+    }
+
+    document.getElementById('cancel-btn').addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to cancel this event?')) return;
+      const messageArea = document.getElementById('message-area');
+      try {
+        const res = await fetch(`/api/events/${eventId}/cancel`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          window.location.href = `/event-details?id=${eventId}`;
+        } else {
+          messageArea.textContent = data.error || 'Failed to cancel event';
+        }
+      } catch (err) {
+        messageArea.textContent = 'Error cancelling event';
+      }
+    });
+
+    document.getElementById('event-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const messageArea = document.getElementById('message-area');
       messageArea.textContent = '';
@@ -67,20 +118,23 @@
         starts_at = new Date(`${date}T${time}`).toISOString();
       }
 
+      const method = eventId ? 'PUT' : 'POST';
+      const endpoint = eventId ? `/api/events/${eventId}` : '/api/events';
+
       try {
-        const res = await fetch('/api/events', {
-          method: 'POST',
+        const res = await fetch(endpoint, {
+          method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, starts_at, location, description, capacity: Number(capacity) })
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          window.location.href = '/events';
+          window.location.href = eventId ? `/event-details?id=${eventId}` : '/events';
         } else {
-          messageArea.textContent = data.error || 'Failed to create event';
+          messageArea.textContent = data.error || 'Failed to save event';
         }
       } catch (err) {
-        messageArea.textContent = 'Error creating event';
+        messageArea.textContent = 'Error saving event';
       }
     });
   </script>

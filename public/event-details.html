@@ -10,7 +10,7 @@
     .event-title { font-weight: bold; font-size: 1.3em; margin-bottom: 10px; }
     .event-detail { margin-bottom: 8px; }
     #message-area { margin-bottom: 15px; font-weight: bold; }
-    button, a.btn { margin-top: 12px; padding: 8px 16px; cursor: pointer; display: inline-block; text-decoration: none; background: #eee; color: #000; border: 1px solid #ccc; border-radius: 4px; }
+    button, a.btn { margin-top: 12px; margin-right: 8px; padding: 8px 16px; cursor: pointer; display: inline-block; text-decoration: none; background: #eee; color: #000; border: 1px solid #ccc; border-radius: 4px; }
     button:hover, a.btn:hover { background: #ddd; }
   </style>
 </head>
@@ -75,6 +75,7 @@
           if (ev.status === 'cancelled') {
             statusEl.textContent = 'Status: Cancelled';
             statusEl.style.color = 'red';
+            regStatusEl.style.display = 'none';
           }
 
           card.appendChild(titleEl);
@@ -82,12 +83,14 @@
           card.appendChild(locEl);
           card.appendChild(descEl);
           card.appendChild(freeEl);
-          card.appendChild(regStatusEl);
+          if (ev.status !== 'cancelled') {
+            card.appendChild(regStatusEl);
+          }
           if (ev.status === 'cancelled') {
             card.appendChild(statusEl);
           }
 
-          if (role === 'member') {
+          if (role === 'member' && ev.status !== 'cancelled') {
             const actionBtn = document.createElement('button');
             if (ev.is_registered) {
               actionBtn.textContent = 'Withdraw';
@@ -129,6 +132,39 @@
               });
             }
             card.appendChild(actionBtn);
+          }
+
+          if (ev.can_manage) {
+            const editBtn = document.createElement('a');
+            editBtn.className = 'btn';
+            editBtn.textContent = 'Edit Event';
+            editBtn.href = `/event?id=${ev.id}`;
+            card.appendChild(editBtn);
+
+            if (ev.status !== 'cancelled') {
+              const cancelBtn = document.createElement('button');
+              cancelBtn.textContent = 'Cancel Event';
+              cancelBtn.style.background = '#ffdddd';
+              cancelBtn.addEventListener('click', async () => {
+                if (!confirm('Are you sure you want to cancel this event?')) return;
+                cancelBtn.disabled = true;
+                try {
+                  const cancelRes = await fetch(`/api/events/${ev.id}/cancel`, { method: 'POST' });
+                  const cancelData = await cancelRes.json();
+                  if (cancelRes.ok && cancelData.success) {
+                    messageArea.textContent = 'Event has been cancelled';
+                    loadEventDetails();
+                  } else {
+                    messageArea.textContent = cancelData.error || 'Error cancelling event';
+                    cancelBtn.disabled = false;
+                  }
+                } catch (err) {
+                  messageArea.textContent = 'Error cancelling event';
+                  cancelBtn.disabled = false;
+                }
+              });
+              card.appendChild(cancelBtn);
+            }
           }
 
           container.appendChild(card);

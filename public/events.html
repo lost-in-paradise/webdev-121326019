@@ -79,7 +79,7 @@
               card.appendChild(statusEl);
             }
 
-            if (role === 'member') {
+            if (role === 'member' && ev.status !== 'cancelled') {
               const signUpBtn = document.createElement('button');
               signUpBtn.textContent = 'Sign Up';
               signUpBtn.addEventListener('click', async () => {

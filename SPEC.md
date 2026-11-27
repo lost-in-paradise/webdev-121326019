@@ -161,3 +161,8 @@ The spec did not say what happens when a member withdraws without being signed u
 **Passed:** All criteria from Slice 4 have passed `npm test`: 25 passed (AC-1 to AC-25).
 **What the agent missed, and what I did about it:**
 The spec did not say whether admins may create events; I decided yes and added AC-25. The first plan wanted a second `createEvent` that would break older tests, missed checks for a non-numeric limit and empty location or description, and added stub endpoints for Slice 6; I had all three fixed. The sign-up list and removal parts of AC-24 are left for Slice 6.
+
+### Slice 5
+**Passed:** All criteria from Slice 5 have passed `npm test`: 31 passed
+**What the agent missed, and what I did about it:**
+The spec did not say what happens when someone edits or cancels an event that has started or is already cancelled; I chose 400 and 409. The page could not know who may edit, so I had `can_manage` added on the server. The plan again put the routes after the tests. The edit form filled in the date in UTC, which would move events after midnight back a day; I had it fixed. Gemini also tried to edit SPEC.md by itself, which I refused.
