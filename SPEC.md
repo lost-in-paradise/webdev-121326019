@@ -27,8 +27,8 @@ Club events.
 - No native mobile app: strictly a responsive web UI accessed via mobile browser.
 - No calendar export: no ICS files or external calendar sync.
 - No comments or ratings: members cannot comment on or rate events.
-- No creation of events by members, only by organizers.
-- No cancellation of events by members, only by organizers.
+- No creation of events by members, only by organizers and admins.
+- No cancellation of events by members, only by organizers and admins.
 - No waitlists: when an event is full, registration is strictly refused without queuing or automatic sign-up.
 - No admin sign-up: the admin account exists only from the seed data, and no one can be given the admin role through the UI.
 
@@ -120,18 +120,19 @@ Screens:
 - [AC-22] An organizer who submits a new event with a limit of 0 or less sees "Limit must be at least 1", and no new row appears in `events`.
 - [AC-23] An organizer who submits a new event with an empty title or a start time in the past sees a message naming the invalid field, and no new row appears in `events`.
 - [AC-24] A member who tries to create an event, open an event's sign-up list, or remove another member sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-25] An admin who submits a valid new event sees it in the events list, and one new row appears in `events` with the admin's id as `organizer_id`.
 
 ### Slice 5: editing and cancelling events
-- [AC-25] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
-- [AC-26] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
-- [AC-27] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
-- [AC-28] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
-- [AC-29] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-26] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
+- [AC-27] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
+- [AC-28] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
+- [AC-29] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
+- [AC-30] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ### Slice 6: seeing sign-ups
-- [AC-30] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
-- [AC-31] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
-- [AC-32] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-31] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
+- [AC-32] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
+- [AC-33] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ## Traceability
 <!-- Filled in from Exercise 3 onward: each AC id, and the test that names it. -->

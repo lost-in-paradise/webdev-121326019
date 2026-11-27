@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUpcomingEvents, signUpForEvent, getEventDetails, withdrawFromEvent } from '../services/events.js';
+import { getUpcomingEvents, signUpForEvent, getEventDetails, withdrawFromEvent, createEventService } from '../services/events.js';
 
 const router = express.Router();
 
@@ -91,6 +91,37 @@ router.delete('/api/events/:id/signup', async (req, res) => {
       errorMessage = err.message;
     } else if (err.message === 'You are not signed up') {
       status = 409;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
+  }
+});
+
+router.post('/api/events', async (req, res) => {
+  try {
+    const { title, starts_at, location, description, capacity } = req.body;
+    const event = await createEventService(req.user.id, {
+      title,
+      startsAt: starts_at,
+      location,
+      description,
+      capacity
+    });
+    res.status(201).json({ success: true, event });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'You do not have permission') {
+      status = 403;
+      errorMessage = err.message;
+    } else if (
+      err.message === 'Limit must be at least 1' ||
+      err.message === 'Title must not be empty' ||
+      err.message === 'Location must not be empty' ||
+      err.message === 'Description must not be empty' ||
+      err.message === 'Start time must be in the future'
+    ) {
+      status = 400;
       errorMessage = err.message;
     }
     res.status(status).json({ success: false, error: errorMessage });

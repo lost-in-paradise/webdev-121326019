@@ -1,4 +1,4 @@
-import { findUpcomingEvents, findEventByIdWithClient, findEventDetailsById } from '../data/events.js';
+import { findUpcomingEvents, findEventByIdWithClient, findEventDetailsById, createEvent } from '../data/events.js';
 import { findUserById } from '../data/users.js';
 import { findRegistrationWithClient, countRegistrationsWithClient, createRegistrationWithClient, deleteRegistrationWithClient } from '../data/registrations.js';
 import { withTransaction } from '../data/db.js';
@@ -103,4 +103,45 @@ export async function withdrawFromEvent(userId, eventId) {
     await deleteRegistrationWithClient(client, userId, eventId);
     return { success: true, message: 'You have withdrawn' };
   });
+}
+
+export async function createEventService(userId, { title, startsAt, location, description, capacity }) {
+  const user = await findUserById(userId);
+  if (!user || user.role === 'member') {
+    throw new Error('You do not have permission');
+  }
+
+  const capNum = Number(capacity);
+  if (!Number.isInteger(capNum) || capNum < 1) {
+    throw new Error('Limit must be at least 1');
+  }
+
+  if (!title || typeof title !== 'string' || title.trim() === '') {
+    throw new Error('Title must not be empty');
+  }
+
+  if (!location || typeof location !== 'string' || location.trim() === '') {
+    throw new Error('Location must not be empty');
+  }
+
+  if (!description || typeof description !== 'string' || description.trim() === '') {
+    throw new Error('Description must not be empty');
+  }
+
+  const startDate = new Date(startsAt);
+  if (isNaN(startDate.getTime()) || startDate <= new Date()) {
+    throw new Error('Start time must be in the future');
+  }
+
+  const event = await createEvent({
+    title: title.trim(),
+    startsAt: startDate.toISOString(),
+    location: location.trim(),
+    description: description.trim(),
+    capacity: capNum,
+    status: 'active',
+    organizerId: user.id
+  });
+
+  return event;
 }
