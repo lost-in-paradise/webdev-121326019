@@ -36,6 +36,11 @@ Club events.
 - Node with Express, PostgreSQL, plain HTML and JavaScript in the UI.
 - Passwords are stored only as a hash, never as readable text.
 - An event has one start column, starts_at timestamptz; there are no separate date and time columns. The UI shows date and time taken from it.
+- Layers: routes → services → data. SQL is written only in `src/data/`; a transaction that spans several queries passes one `client` through the data functions.
+- Migrations are numbered files in `migrations/`, applied with `npm run migrate`. Seed data comes only from `npm run seed`, never from a migration.
+- The session holds only the user id; the role is read from `users` on every request.
+- Google is called only from `src/services/google.js`, so tests replace it with a stub.
+- Tests use `node --test` with supertest, run one file at a time (`--test-concurrency=1`), name the AC id in each title, and delete the rows they create.
 
 ## The model feature
 <!-- Which model, which modality, and what it does for a user.
@@ -102,30 +107,31 @@ Screens:
 - [AC-13] A member who signs up for an event they have already joined sees "You are already signed up", and the number of rows in `registrations` for that member and event stays at 1.
 - [AC-14] When two members submit sign-ups at the same time for an event with one free place, one sees "You are signed up" and the other sees "This event is full", and exactly one new row appears in `registrations`.
 - [AC-15] A member who tries to sign up for an event that has already started sees "This event has already started", and no new row appears in `registrations`.
+- [AC-16] An organizer or an admin who tries to sign up for an event sees "You do not have permission", and no new row appears in `registrations`.
 
 ### Slice 3: event details and withdrawing
-- [AC-16] A member who opens `/event-details` sees a title, date, time, location, description, number of free places and member status(signup or not for the event).
-- [AC-17] A member who withdraws from an upcoming event sees "You have withdrawn", their row is removed from `registrations`, and the event's free places increase by 1.
-- [AC-18] A member who tries to withdraw from an event that has already started sees "This event has already started", and their row stays in `registrations`.
-- [AC-19] After a member withdraws from a full event, number of free places is increased by 1 and another member who signs up sees "You are signed up", and one new row with that member's user id and the event id appears in `registrations`.
+- [AC-17] A member who opens `/event-details` sees a title, date, time, location, description, number of free places and member status(signup or not for the event).
+- [AC-18] A member who withdraws from an upcoming event sees "You have withdrawn", their row is removed from `registrations`, and the event's free places increase by 1.
+- [AC-19] A member who tries to withdraw from an event that has already started sees "This event has already started", and their row stays in `registrations`.
+- [AC-20] After a member withdraws from a full event, number of free places is increased by 1 and another member who signs up sees "You are signed up", and one new row with that member's user id and the event id appears in `registrations`.
 
 ### Slice 4: creating events
-- [AC-20] An organizer who submits a valid new event with a limit of 10 places sees it in the events list, and one new row with `capacity` = 10 appears in `events`.
-- [AC-21] An organizer who submits a new event with a limit of 0 or less sees "Limit must be at least 1", and no new row appears in `events`.
-- [AC-22] An organizer who submits a new event with an empty title or a start time in the past sees a message naming the invalid field, and no new row appears in `events`.
-- [AC-23] A member who tries to create an event, open an event's sign-up list, or remove another member sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-21] An organizer who submits a valid new event with a limit of 10 places sees it in the events list, and one new row with `capacity` = 10 appears in `events`.
+- [AC-22] An organizer who submits a new event with a limit of 0 or less sees "Limit must be at least 1", and no new row appears in `events`.
+- [AC-23] An organizer who submits a new event with an empty title or a start time in the past sees a message naming the invalid field, and no new row appears in `events`.
+- [AC-24] A member who tries to create an event, open an event's sign-up list, or remove another member sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ### Slice 5: editing and cancelling events
-- [AC-24] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
-- [AC-25] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
-- [AC-26] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
-- [AC-27] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
-- [AC-28] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-25] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
+- [AC-26] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
+- [AC-27] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
+- [AC-28] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
+- [AC-29] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ### Slice 6: seeing sign-ups
-- [AC-29] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
-- [AC-30] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
-- [AC-31] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-30] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
+- [AC-31] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
+- [AC-32] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ## Traceability
 <!-- Filled in from Exercise 3 onward: each AC id, and the test that names it. -->

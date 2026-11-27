@@ -4,16 +4,19 @@ Read this file at the start of every session. Keep it short and correct; update 
 
 ## Project
 <!-- One or two sentences: what the app does and for whom. Link SPEC.md. -->
-Club events. Members sing in, see the upcoming events, the details for an event and sign-up for an event. Organizers create, update or cancel events, and see who sign up for their events.
+Club events. Members sign in, see the upcoming events, the details for an event and sign-up for an event. Organizers create, update or cancel events, and see who sign up for their events.
 See `SPEC.md` for goals, non-goals and acceptance criteria.
 
 ## Commands
 <!-- How to install, run, test. Keep these exact and working. -->
+- Start the database (after every Codespace restart): sudo service postgresql start
 - Install: npm install
+- Migrate: npm run migrate
 - Run: npm start
 - Test: npm test
 - Coverage:
 - MCP server: npm run --silent mcp
+- Seed test data: npm run seed
 
 ## Conventions
 <!-- Folder layout, naming, where business rules live, how errors are returned to the client. -->
@@ -57,7 +60,7 @@ that talks to the database directly is a second, unguarded way into your data: n
 - deleting files or folders
 - editing a migration that has already run
 - installing or removing dependencies
-- pushing, tagging or changing CI
+- tagging or changing CI
 - anything that touches secrets or `.env`
 - changing an authentication or authorization rule
 - adding, renaming or removing an MCP tool
@@ -65,6 +68,7 @@ that talks to the database directly is a second, unguarded way into your data: n
 - sending user data to a third-party model
 
 ## Never
+- run `git commit`, `git push` or any other command that changes git history; the user commits manually, so when a step is done, stop and suggest a commit message
 - commit secrets, passwords, API keys or an OAuth client secret
 - weaken or delete a test to make it pass
 - lower a coverage threshold or switch off a CI job to make the build green
