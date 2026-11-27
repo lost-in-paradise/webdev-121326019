@@ -18,8 +18,8 @@ Club events.
 - An organizer sees who has signed up for their event.
 - Each event in the list shows its title, date and free places.
 - The details of an event shows its title, date, time, location, description, and free places.
-- An admin changes a user's role between member and organizer.
-- An admin edits or cancels any event, sees who has signed up for it, and removes a member from it.
+- The admin edits or cancels any event, sees who has signed up for it, and removes a member from it.
+- The admin sees all users and switches their role between member and organizer.
 
 ## Non-goals
 - No payments: every event is free.
@@ -27,10 +27,11 @@ Club events.
 - No native mobile app: strictly a responsive web UI accessed via mobile browser.
 - No calendar export: no ICS files or external calendar sync.
 - No comments or ratings: members cannot comment on or rate events.
-- No creation of events by members, only by organizers and admins.
-- No cancellation of events by members, only by organizers and admins.
+- No creation of events by members, only by organizers and the admin.
+- No cancellation of events by members, only by organizers and the admin.
 - No waitlists: when an event is full, registration is strictly refused without queuing or automatic sign-up.
 - No admin sign-up: the admin account exists only from the seed data, and no one can be given the admin role through the UI.
+- No deleting users: the admin only changes roles, and accounts are never removed through the UI.
 
 ## Constraints
 - Node with Express, PostgreSQL, plain HTML and JavaScript in the UI.
@@ -41,6 +42,7 @@ Club events.
 - The session holds only the user id; the role is read from `users` on every request.
 - Google is called only from `src/services/google.js`, so tests replace it with a stub.
 - Tests use `node --test` with supertest, run one file at a time (`--test-concurrency=1`), name the AC id in each title, and delete the rows they create.
+- There is exactly one admin, created by `npm run seed`; the app can't make anyone the admin or remove the admin role.
 
 ## The model feature
 <!-- Which model, which modality, and what it does for a user.
@@ -51,7 +53,6 @@ Club events.
 - Output: a suggested title, date and place, shown in the form for the organizer to correct.
 - When it fails: no key, a timeout or a 429 all leave the form empty with a note saying to
   type it in - "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing save.
-
 
 ## Auth
 <!-- Local sign-in plus at least one provider. Say how an account signing in both ways stays one account. -->
@@ -66,9 +67,9 @@ Club events.
      A description shorter than 20 characters is not a description. -->
 | Tool | What it does | Who may call it |
 | --- | --- | --- |
-| get_event | Return the title and description of one event by its id. Use it when asked what an event covers. | organizers, members |
-| list_upcoming_events | Return a list with a title, date, time, location and number of free places for the upcoming events, soonest first. Use it when asked for upcoming events. | organizers, members|
-| list_event_registrations | Return a list with the member email and name for all members registered for the organizer's own event, by event id. Use it when asked who has signed up for an event. | the event's organizer |
+| get_event | Return the title and description of one event by its id. Use it when asked what an event covers. | organizers, members, the admin |
+| list_upcoming_events | Return a list with a title, date, time, location and number of free places for the upcoming events, soonest first. Use it when asked for upcoming events. | organizers, members, the admin|
+| list_event_registrations | Return the e-mail and sign-up date of every member registered for an event, by event id. Use it when asked who has signed up for an event. | the event's organizer or the admin |
 
 ## UI
 <!-- Stack, and the three or more screens. The graded checklist lives in docs/UI.md. -->
@@ -77,8 +78,9 @@ Screens:
 - `/login`: Log in and sign up the user with e-mail and password or Google account.
 - `/events`: Shows the upcoming events, soonest first, each with its title, date and number of free places.
 - `/event-details`: Shows a title, date, time, location, description, number of free places and member status(signup or not for the event). Used by members to see details about the event. Details are retrieve by event_id. Member can signup or withdraw on this screen.
-- `/event`: Use to create, edit or cancel an event. Used by organizers for their own events and by admins for any event. Can not be used by members.
-- `/event-signups`: Organizers can see a list with signed-up members for their own event and remove a member from it. Used by organizers for their own events and by admins for any event. Can not be used by members.
+- `/event`: Use to create, edit or cancel an event. Used by organizers for their own events and by the admin for any event. Can not be used by members.
+- `/event-signups`: Organizers can see a list with signed-up members for their own event and remove a member from it. Used by organizers for their own events and by the admin for any event. Can not be used by members.
+- `/admin/users` (admin only): table of users with e-mail, role and created date; a role dropdown and Save button per row; a "Users" link in the events page header, shown only to the admin.
 
 ## Architecture
 <!-- Exercise 3. One request traced through every layer, naming the file for each one,
@@ -107,7 +109,7 @@ Screens:
 - [AC-13] A member who signs up for an event they have already joined sees "You are already signed up", and the number of rows in `registrations` for that member and event stays at 1.
 - [AC-14] When two members submit sign-ups at the same time for an event with one free place, one sees "You are signed up" and the other sees "This event is full", and exactly one new row appears in `registrations`.
 - [AC-15] A member who tries to sign up for an event that has already started sees "This event has already started", and no new row appears in `registrations`.
-- [AC-16] An organizer or an admin who tries to sign up for an event sees "You do not have permission", and no new row appears in `registrations`.
+- [AC-16] An organizer or the admin who tries to sign up for an event sees "You do not have permission", and no new row appears in `registrations`.
 
 ### Slice 3: event details and withdrawing
 - [AC-17] A member who opens `/event-details` sees a title, date, time, location, description, number of free places and member status(signup or not for the event).
@@ -120,19 +122,32 @@ Screens:
 - [AC-22] An organizer who submits a new event with a limit of 0 or less sees "Limit must be at least 1", and no new row appears in `events`.
 - [AC-23] An organizer who submits a new event with an empty title or a start time in the past sees a message naming the invalid field, and no new row appears in `events`.
 - [AC-24] A member who tries to create an event, open an event's sign-up list, or remove another member sees "You do not have permission", and no rows change in `events` or `registrations`.
-- [AC-25] An admin who submits a valid new event sees it in the events list, and one new row appears in `events` with the admin's id as `organizer_id`.
+- [AC-25] The admin who submits a valid new event sees it in the events list, and one new row appears in `events` with the admin's id as `organizer_id`.
 
 ### Slice 5: editing and cancelling events
 - [AC-26] An organizer who edits an event's title and location sees the new values on the event page, the same `events` row is updated, and its `registrations` rows are unchanged.
 - [AC-27] An organizer who lowers an event's limit below the number of members signed up sees "Limit cannot be lower than the number of sign-ups", and the event's `capacity` stays unchanged.
 - [AC-28] An organizer who cancels an event sees it marked "Cancelled", the event's `status` is `cancelled`, and its `registrations` rows are kept.
 - [AC-29] A member who tries to sign up for a cancelled event sees "This event has been cancelled", and no new row appears in `registrations`.
-- [AC-30] An organizer who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-30] An organizer (not the admin) who tries to edit or cancel an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
 
 ### Slice 6: seeing sign-ups
 - [AC-31] An organizer who opens the sign-up list for their event sees exactly the members with a `registrations` row for that event, and no rows change in `events` or `registrations`.
 - [AC-32] An organizer who removes a member from the sign-ups list of their upcoming event no longer sees that member in the list, the row with that member id and event id is deleted from `registrations`, and the event's free places increase by 1.
-- [AC-33] An organizer who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+- [AC-33] An organizer (not the admin) who tries to see the sign-up list or remove a member from an event that is not their own sees "You do not have permission", and no rows change in `events` or `registrations`.
+
+### Slice 7: the admin manages user roles
+- [AC-34] The admin who opens `/admin/users` sees every user with e-mail, role and created date, and no rows change in `users`.
+- [AC-35] The admin who changes a member's role to organizer sees "Role updated", that user's row in `users` now has role `organizer`, and no other row changes.
+- [AC-36] A user whose role was changed gets the new permissions on their next request without signing in again: a member promoted to organizer can create an event, and an organizer demoted to member sees "You do not have permission" when creating one.
+- [AC-37] The admin who submits a role other than member or organizer (including admin) sees "Role must be member or organizer", and no row changes in `users`.
+- [AC-38] The admin who tries to change their own role sees "You cannot change your own role", and their row in `users` still has role `admin`.
+- [AC-39] The admin who changes the role of a user id that does not exist sees "User not found", and no row changes in `users`.
+- [AC-40] A member or organizer who opens `/admin/users` or tries to change a role sees "You do not have permission", and no row changes in `users`.
+- [AC-41] An organizer demoted to member keeps their events in `events` with the same `organizer_id` and all their `registrations` rows, but sees "You do not have permission" when trying to edit or cancel them.
+- [AC-42] A member with sign-ups who is promoted to organizer keeps their rows in `registrations`.
+- [AC-43] The "Users" link on `/events` is shown only to the admin, and a visitor who is not signed in and opens `/admin/users` lands on `/login`.
+
 
 ## Traceability
 <!-- Filled in from Exercise 3 onward: each AC id, and the test that names it. -->
