@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUpcomingEvents, signUpForEvent, getEventDetails, withdrawFromEvent, createEventService, updateEventService, cancelEventService } from '../services/events.js';
+import { getUpcomingEvents, signUpForEvent, getEventDetails, withdrawFromEvent, createEventService, updateEventService, cancelEventService, getEventSignups, removeMemberFromEvent } from '../services/events.js';
 
 const router = express.Router();
 
@@ -194,6 +194,60 @@ router.post('/api/events/:id/cancel', async (req, res) => {
       status = 400;
       errorMessage = err.message;
     } else if (err.message === 'This event has been cancelled') {
+      status = 409;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
+  }
+});
+
+router.get('/api/events/:id/signups', async (req, res) => {
+  const eventId = Number(req.params.id);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ success: false, error: 'Invalid event id' });
+  }
+  try {
+    const signups = await getEventSignups(req.user.id, eventId);
+    res.json({ success: true, signups });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'You do not have permission') {
+      status = 403;
+      errorMessage = err.message;
+    } else if (err.message === 'Event not found') {
+      status = 404;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
+  }
+});
+
+router.delete('/api/events/:id/signups/:memberId', async (req, res) => {
+  const eventId = Number(req.params.id);
+  const memberId = Number(req.params.memberId);
+  if (!Number.isInteger(eventId) || !Number.isInteger(memberId)) {
+    return res.status(400).json({ success: false, error: 'Invalid id' });
+  }
+  try {
+    const result = await removeMemberFromEvent(req.user.id, eventId, memberId);
+    res.json({ success: true, message: result.message });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'You do not have permission') {
+      status = 403;
+      errorMessage = err.message;
+    } else if (err.message === 'Event not found') {
+      status = 404;
+      errorMessage = err.message;
+    } else if (err.message === 'This event has already started') {
+      status = 400;
+      errorMessage = err.message;
+    } else if (
+      err.message === 'This event has been cancelled' ||
+      err.message === 'Member is not signed up'
+    ) {
       status = 409;
       errorMessage = err.message;
     }

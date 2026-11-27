@@ -31,3 +31,16 @@ export async function deleteRegistrationWithClient(client, userId, eventId) {
   );
   return result.rows[0] || null;
 }
+
+export async function findRegistrationsByEventId(eventId) {
+  const result = await pool.query(
+    `SELECT r.user_id, u.email, r.created_at AS registered_at
+     FROM registrations r
+     JOIN users u ON u.id = r.user_id
+     WHERE r.event_id = $1
+     ORDER BY r.created_at ASC`,
+    [eventId]
+  );
+  return result.rows;
+}
+
