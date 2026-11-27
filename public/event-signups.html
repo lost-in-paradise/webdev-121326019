@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Event Sign-ups - Club Events</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    .event-card { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 4px; }
+    .event-title { font-weight: bold; font-size: 1.3em; margin-bottom: 10px; }
+    #message-area { margin-bottom: 15px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; }
+    button, a.btn { margin-top: 12px; margin-right: 8px; padding: 8px 16px; cursor: pointer; display: inline-block; text-decoration: none; background: #eee; color: #000; border: 1px solid #ccc; border-radius: 4px; }
+    button:hover, a.btn:hover { background: #ddd; }
+    .btn-remove { margin-top: 0; padding: 4px 8px; background: #ffdddd; }
+    .btn-remove:hover { background: #ffcccc; }
+  </style>
+</head>
+<body>
+  <p><a id="back-link" href="/events" class="btn">&larr; Back to event</a></p>
+  <h1>Event Sign-ups</h1>
+  <div id="message-area"></div>
+  <div id="signups-container">Loading sign-ups...</div>
+
+  <script>
+    async function loadSignups() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const eventId = urlParams.get('id');
+      const container = document.getElementById('signups-container');
+      const messageArea = document.getElementById('message-area');
+      const backLink = document.getElementById('back-link');
+
+      if (!eventId) {
+        container.textContent = 'No event specified.';
+        return;
+      }
+
+      backLink.href = `/event-details?id=${eventId}`;
+
+      try {
+        const eventRes = await fetch(`/api/events/${eventId}`);
+        const eventData = await eventRes.json();
+
+        if (!eventRes.ok || !eventData.success) {
+          container.textContent = eventData.error || 'Failed to load event.';
+          return;
+        }
+
+        const event = eventData.event;
+        const isCancelled = event.status === 'cancelled';
+        const hasStarted = new Date(event.starts_at) <= new Date();
+
+        const signupsRes = await fetch(`/api/events/${eventId}/signups`);
+        const signupsData = await signupsRes.json();
+
+        if (!signupsRes.ok || !signupsData.success) {
+          container.textContent = signupsData.error || 'Failed to load sign-ups.';
+          return;
+        }
+
+        const signups = signupsData.signups;
+        container.textContent = '';
+
+        const card = document.createElement('div');
+        card.className = 'event-card';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'event-title';
+        titleEl.textContent = event.title;
+        card.appendChild(titleEl);
+
+        if (isCancelled) {
+          const statusEl = document.createElement('div');
+          statusEl.textContent = 'Status: Cancelled';
+          statusEl.style.color = 'red';
+          statusEl.style.marginBottom = '10px';
+          card.appendChild(statusEl);
+        } else if (hasStarted) {
+          const statusEl = document.createElement('div');
+          statusEl.textContent = 'Status: Started';
+          statusEl.style.color = '#666';
+          statusEl.style.marginBottom = '10px';
+          card.appendChild(statusEl);
+        }
+
+        if (signups.length === 0) {
+          const emptyMsg = document.createElement('p');
+          emptyMsg.textContent = 'No members have signed up for this event yet.';
+          card.appendChild(emptyMsg);
+        } else {
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          const headerRow = document.createElement('tr');
+
+          const thEmail = document.createElement('th');
+          thEmail.textContent = 'E-mail';
+          headerRow.appendChild(thEmail);
+
+          const thDate = document.createElement('th');
+          thDate.textContent = 'Sign-up Date';
+          headerRow.appendChild(thDate);
+
+          const canRemove = !isCancelled && !hasStarted;
+          if (canRemove) {
+            const thAction = document.createElement('th');
+            thAction.textContent = 'Action';
+            headerRow.appendChild(thAction);
+          }
+
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          const tbody = document.createElement('tbody');
+          signups.forEach(signup => {
+            const row = document.createElement('tr');
+
+            const tdEmail = document.createElement('td');
+            tdEmail.textContent = signup.email;
+            row.appendChild(tdEmail);
+
+            const tdDate = document.createElement('td');
+            tdDate.textContent = new Date(signup.registered_at).toLocaleString();
+            row.appendChild(tdDate);
+
+            if (canRemove) {
+              const tdAction = document.createElement('td');
+              const removeBtn = document.createElement('button');
+              removeBtn.className = 'btn-remove';
+              removeBtn.textContent = 'Remove';
+              removeBtn.addEventListener('click', async () => {
+                if (!confirm(`Are you sure you want to remove ${signup.email}?`)) return;
+                removeBtn.disabled = true;
+                try {
+                  const delRes = await fetch(`/api/events/${eventId}/signups/${signup.user_id}`, { method: 'DELETE' });
+                  const delData = await delRes.json();
+                  if (delRes.ok && delData.success) {
+                    messageArea.textContent = delData.message || 'Member removed';
+                    messageArea.style.color = 'green';
+                    loadSignups();
+                  } else {
+                    messageArea.textContent = delData.error || 'Error removing member';
+                    messageArea.style.color = 'red';
+                    removeBtn.disabled = false;
+                  }
+                } catch (err) {
+                  messageArea.textContent = 'Error removing member';
+                  messageArea.style.color = 'red';
+                  removeBtn.disabled = false;
+                }
+              });
+              tdAction.appendChild(removeBtn);
+              row.appendChild(tdAction);
+            }
+
+            tbody.appendChild(row);
+          });
+
+          table.appendChild(tbody);
+          card.appendChild(table);
+        }
+
+        container.appendChild(card);
+      } catch (err) {
+        container.textContent = 'Error loading sign-ups.';
+      }
+    }
+
+    loadSignups();
+  </script>
+</body>
+</html>

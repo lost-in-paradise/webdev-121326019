@@ -166,3 +166,8 @@ The spec did not say whether admins may create events; I decided yes and added A
 **Passed:** All criteria from Slice 5 have passed `npm test`: 31 passed
 **What the agent missed, and what I did about it:**
 The spec did not say what happens when someone edits or cancels an event that has started or is already cancelled; I chose 400 and 409. The page could not know who may edit, so I had `can_manage` added on the server. The plan again put the routes after the tests. The edit form filled in the date in UTC, which would move events after midnight back a day; I had it fixed. Gemini also tried to edit SPEC.md by itself, which I refused.
+
+### Slice 6
+**Passed:** All criteria from Slice 6 have passed `npm test`
+**What the agent missed, and what I did about it:**
+The test file was missing `after(() => { pool.end(); })`, so `npm test` would hang; I rejected the file and had Gemini add it.

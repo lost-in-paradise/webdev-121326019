@@ -54,3 +54,10 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: plan review, each file reviewed, `npm test` after each step (31 passed), browser check, commit per step
 - Went wrong: routes planned after the tests, no way for the page to know who may edit, edit form showed the UTC date, Gemini tried to edit SPEC.md
 - Changed by hand: chose 400 for started and 409 for cancelled events, asked for `can_manage`, refused the SPEC.md edit, ran the tests myself after token limit
+
+## 2026-11-27 · slice 6 creation
+- Goal: organizer/admin sees an event's sign-up list and removes a member (AC-31 to 33, rest of AC-24).
+- Delegated: plan, data/service/routes, tests, sign-ups page.
+- Checkpoints: plan reviewed
+- Went wrong: plan said organizer "and" admin (fixed to "or"); test file was missing `after(pool.end)`.
+- Changed by hand: nothing.

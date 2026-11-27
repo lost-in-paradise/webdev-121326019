@@ -135,6 +135,12 @@
           }
 
           if (ev.can_manage) {
+            const signupsBtn = document.createElement('a');
+            signupsBtn.className = 'btn';
+            signupsBtn.textContent = 'View sign-ups';
+            signupsBtn.href = `/event-signups?id=${ev.id}`;
+            card.appendChild(signupsBtn);
+
             const editBtn = document.createElement('a');
             editBtn.className = 'btn';
             editBtn.textContent = 'Edit Event';
