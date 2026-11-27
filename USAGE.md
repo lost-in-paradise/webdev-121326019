@@ -7,5 +7,5 @@ One row per agent session. In Gemini CLI, type `/stats` before you quit and copy
 | 2026-11-02 | gemini-3.5-flash-lite | 30,616 | 10,146 |---|---|
 | 2026-11-07 | gemini-3.5-flash-lite | 446,495 | 344,848 |---|---|
 | 2026-11-07 | gemini-3.5-flash-lite | 1,299,250 | 1,122,732 |---|---|
-| 2026-11-22 | gemini-3.5-flash-lite | 4,194,348 | 143,079 |---|---|
-| 2026-11-27 | gemini-3.5-flash-lite | 1,467,785 | 32,102 |---|---|
+| 2026-11-26 | gemini-3.5-flash-lite | 4,194,348 | 143,079 |---|---|
+| 2026-11-27 | gemini-3.5-flash-lite | 3,193,967 | 49,037 |---|---|

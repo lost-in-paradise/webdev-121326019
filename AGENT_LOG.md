@@ -34,3 +34,9 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Went wrong: wrong order of checks, SQL in the service, free places as text, chat text written into the test file
 - Changed by hand: added some clarifications in the SPEC.md, never-commit rule in AGENTS.md, cleaned the test file
 
+## 2026-11-27 · slice 3 creation
+- Goal: event details and withdrawing (AC-17 to AC-20)
+- Delegated: plan, data functions, withdraw logic, endpoints, details page
+- Checkpoints: plan review, each file reviewed, `npm test` after each step (20 passed), browser check, commit per step
+- Went wrong: tests planned as a separate last step, AC-20 test missed the free places check, status shown only through the button
+- Changed by hand: chose 409 "You are not signed up", moved tests into the same step as the code, asked for the status line on the details page

@@ -149,4 +149,9 @@ First few plans were incorrect and I've editted and committed changes into the s
 ### Slice 2
 **Passed:** All criteria from Slice 2 have passed `npm test`: 16 passed
 **What the agent missed, and what I did about it:**
-The plan checked "full" before "already signed up", which breaks AC-13; I had the order changed. It put `BEGIN`/`COMMIT` in the service; moved to `withTransaction` in the data layer. Free places came back as text until `::int` was added. The test file got chat text written into it, which I removed by hand. 
+The plan checked "full" before "already signed up", which breaks AC-13; I had the order changed. It put `BEGIN`/`COMMIT` in the service; moved to `withTransaction` in the data layer. Free places came back as text until `::int` was added. The test file got chat text written into it, which I removed by hand.
+
+### Slice 3
+**Passed:** All criteria from Slice 3 have passed `npm test`: 20 passed (AC-1 to AC-20).
+**What the agent missed, and what I did about it:**
+The spec did not say what happens when a member withdraws without being signed up; I chose 409 "You are not signed up". The plan put the tests in a separate last step; I had them moved into the same step as the code. The AC-20 test did not check that free places go up by 1, and the details page showed the status only through the button, not as text; I had both added.
