@@ -1,7 +1,17 @@
 import express from 'express';
-import { getUpcomingEvents } from '../services/events.js';
+import { getUpcomingEvents, signUpForEvent } from '../services/events.js';
 
 const router = express.Router();
+
+router.get('/api/me', (req, res) => {
+  res.json({
+    success: true,
+    user: {
+      email: req.user.email,
+      role: req.user.role
+    }
+  });
+});
 
 router.get('/api/events', async (req, res) => {
   try {
@@ -9,6 +19,34 @@ router.get('/api/events', async (req, res) => {
     res.json({ success: true, events });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+router.post('/api/events/:id/signup', async (req, res) => {
+  const eventId = Number(req.params.id);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ success: false, error: 'Invalid event id' });
+  }
+  try {
+    const registration = await signUpForEvent(req.user.id, eventId);
+    res.status(201).json({ success: true, message: 'You are signed up', registration });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'You do not have permission') {
+      status = 403;
+      errorMessage = err.message;
+    } else if (err.message === 'Event not found') {
+      status = 404;
+      errorMessage = err.message;
+    } else if (err.message === 'This event has already started') {
+      status = 400;
+      errorMessage = err.message;
+    } else if (err.message === 'You are already signed up' || err.message === 'This event is full') {
+      status = 409;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
   }
 });
 
