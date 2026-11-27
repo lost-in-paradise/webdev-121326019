@@ -40,3 +40,10 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: plan review, each file reviewed, `npm test` after each step (20 passed), browser check, commit per step
 - Went wrong: tests planned as a separate last step, AC-20 test missed the free places check, status shown only through the button
 - Changed by hand: chose 409 "You are not signed up", moved tests into the same step as the code, asked for the status line on the details page
+
+## 2026-11-27 · slice 4 creation
+- Goal: creating events (AC-21 to AC-25)
+- Delegated: plan, create event service, POST /api/events, create event page, Create event button
+- Checkpoints: plan review, each file reviewed, `npm test` after each step (25 passed), browser check as organizer, admin and member, commit per step
+- Went wrong: plan wanted a second `createEvent`, weak limit check, missing location and description checks, stub endpoints for Slice 6, route missing from the first step
+- Changed by hand: decided admins can create events (AC-25 in SPEC.md, Non-goals updated), limited AC-24 to creating events in this slice

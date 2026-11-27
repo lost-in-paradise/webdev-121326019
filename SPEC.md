@@ -156,3 +156,8 @@ The plan checked "full" before "already signed up", which breaks AC-13; I had th
 **Passed:** All criteria from Slice 3 have passed `npm test`: 20 passed (AC-1 to AC-20).
 **What the agent missed, and what I did about it:**
 The spec did not say what happens when a member withdraws without being signed up; I chose 409 "You are not signed up". The plan put the tests in a separate last step; I had them moved into the same step as the code. The AC-20 test did not check that free places go up by 1, and the details page showed the status only through the button, not as text; I had both added.
+
+### Slice 4
+**Passed:** All criteria from Slice 4 have passed `npm test`: 25 passed (AC-1 to AC-25).
+**What the agent missed, and what I did about it:**
+The spec did not say whether admins may create events; I decided yes and added AC-25. The first plan wanted a second `createEvent` that would break older tests, missed checks for a non-numeric limit and empty location or description, and added stub endpoints for Slice 6; I had all three fixed. The sign-up list and removal parts of AC-24 are left for Slice 6.
