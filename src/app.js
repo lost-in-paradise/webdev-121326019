@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import eventRoutes from './routes/events.js';
+import adminRoutes from './routes/admin.js';
 import { findUserById } from './data/users.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,11 +68,18 @@ async function requireAuth(req, res, next) {
 // Event API routes
 app.use(requireAuth, eventRoutes);
 
+// Admin API routes
+app.use(requireAuth, adminRoutes);
+
 // Protected static files
 app.use(requireAuth, express.static(path.join(rootDir, 'public')));
 
 app.get('/events', requireAuth, (req, res) => {
   res.sendFile(path.join(rootDir, 'public/events.html'));
+});
+
+app.get('/admin/users', requireAuth, (req, res) => {
+  res.sendFile(path.join(rootDir, 'public/admin-users.html'));
 });
 
 app.get('/event', requireAuth, (req, res) => {

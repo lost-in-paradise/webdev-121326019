@@ -30,3 +30,16 @@ export async function createUser({ email, passwordHash = null, googleId = null, 
 export async function deleteUserByEmail(email) {
   await pool.query('DELETE FROM users WHERE email = $1', [email]);
 }
+
+export async function findAllUsers() {
+  const result = await pool.query('SELECT id, email, role, created_at FROM users ORDER BY id ASC');
+  return result.rows;
+}
+
+export async function updateUserRole(id, role) {
+  const result = await pool.query(
+    'UPDATE users SET role = $1 WHERE id = $2 RETURNING id, email, role, created_at',
+    [role, id]
+  );
+  return result.rows[0] || null;
+}
