@@ -61,3 +61,10 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: plan reviewed
 - Went wrong: plan said organizer "and" admin (fixed to "or"); test file was missing `after(pool.end)`.
 - Changed by hand: nothing.
+
+## 2026-11-27 · slice 7 creation
+- Goal: the admin lists all users and switches roles between member and organizer (AC-34 to 43).
+- Delegated: plan, data/service/routes, tests, users page and Users link
+- Checkpoints: plan reviewed; step 1 committed at 48 passing.
+- Went wrong: tests planned a fixed user count and no check on other users (fixed before writing); an unrequested change to the role line in events.html (kept, harmless).
+- Changed by hand: nothing.

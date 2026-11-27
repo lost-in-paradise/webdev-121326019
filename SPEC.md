@@ -186,3 +186,8 @@ The spec did not say what happens when someone edits or cancels an event that ha
 **Passed:** All criteria from Slice 6 have passed `npm test`
 **What the agent missed, and what I did about it:**
 The test file was missing `after(() => { pool.end(); })`, so `npm test` would hang; I rejected the file and had Gemini add it.
+
+### Slice 7
+**Passed:** All criteria from Slice 7 have passed `npm test`: 48 passed.
+**What the agent missed, and what I did about it:**
+The plan followed the spec closely this time. Its tests would have compared the user list to a fixed number and not checked that other users stay unchanged; I had AC-34 compare against the real row count and AC-35 check a second user. The "Users" link on `/events` is client-side, so it is checked by hand, not by `npm test`. 
