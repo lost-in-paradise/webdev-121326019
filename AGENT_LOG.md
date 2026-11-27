@@ -26,3 +26,11 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: -
 - Went wrong: gemini connection, initial plan, tables creation
 - Changed by hand: some clarifications in the spec and postgre
+
+## 2026-11-27 · slice 2 creation
+- Goal: slice 2 creation
+- Delegated: plan, migration, sign-up logic, endpoint
+- Checkpoints: plan review, each file reviewed, `npm test` after each step (16 passed), browser check, commit per step
+- Went wrong: wrong order of checks, SQL in the service, free places as text, chat text written into the test file
+- Changed by hand: added some clarifications in the SPEC.md, never-commit rule in AGENTS.md, cleaned the test file
+
