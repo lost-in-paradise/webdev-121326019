@@ -56,3 +56,19 @@ export async function findEventDetailsById(userId, eventId) {
   );
   return result.rows[0] || null;
 }
+
+export async function updateEventWithClient(client, eventId, { title, startsAt, location, description, capacity }) {
+  const result = await client.query(
+    'UPDATE events SET title = $1, starts_at = $2, location = $3, description = $4, capacity = $5 WHERE id = $6 RETURNING *',
+    [title, startsAt, location, description, capacity, eventId]
+  );
+  return result.rows[0];
+}
+
+export async function cancelEventWithClient(client, eventId) {
+  const result = await client.query(
+    "UPDATE events SET status = 'cancelled' WHERE id = $1 RETURNING *",
+    [eventId]
+  );
+  return result.rows[0];
+}

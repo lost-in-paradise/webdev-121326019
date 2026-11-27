@@ -74,3 +74,4 @@ that talks to the database directly is a second, unguarded way into your data: n
 - lower a coverage threshold or switch off a CI job to make the build green
 - add an MCP tool that reaches past the service layer
 - log a prompt that contains somebody's personal data
+- edit SPEC.md or AGENT_LOG.md; the user maintains them
