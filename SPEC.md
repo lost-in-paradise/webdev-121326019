@@ -45,11 +45,10 @@ Club events.
 - There is exactly one admin, created by `npm run seed`; the app can't make anyone the admin or remove the admin role.
 
 ## The model feature
-- Model: Gemini 2.5 Flash, vision, called from `src/services/poster.js` and nowhere else.
-- Input: the poster image an organizer uploads, and nothing about any member.
-- Output: a suggested title, date and place, shown in the form for the organizer to correct.
-- When it fails (fallback): no key, a timeout or a 429 all leave the form empty with a note saying to type it in - "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing save.
-  type it in - "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing save.
+- Model: Gemini 2.5 Flash (vision), called only from `src/services/poster.js` with plain `fetch`; the key is `GEMINI_API_KEY` in `.env`.
+- Input: one PNG or JPEG poster image (max 4 MB) uploaded by an organizer or the admin on `/event`, sent to `POST /api/events/poster`; nothing about any member is sent.
+- Output: a suggested title, start date and time, and location, filled into the form for the organizer to correct.
+- When it fails (fallback): no key, no answer within 10 seconds (timeout), a 429 or other error, or an answer that is not valid JSON all return empty fields and the note "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing Save.
 
 ## Auth
 <!-- Local sign-in plus at least one provider. Say how an account signing in both ways stays one account. -->
@@ -158,6 +157,15 @@ One request traced through the layers: a member clicks **Sign Up** on `/event-de
 - [AC-46] Calling `list_upcoming_events` returns the same events, in the same order and with the same free places, as `/events`.
 - [AC-47] Calling `list_event_registrations` as the event's organizer or the admin returns the e-mail and sign-up date of every member with a `registrations` row for that event, and no password hash.
 - [AC-48] Calling `list_event_registrations` as a member or as an organizer who does not own the event returns "You do not have permission", and no rows change.
+
+### Slice 9: reading an event poster
+- [AC-49] An organizer or the admin who uploads a poster on `/event` sees the title, start time and location the model suggested filled into the form, and no new row appears in `events`.
+- [AC-50] When `GEMINI_API_KEY` is missing, an organizer who uploads a poster sees "Could not read the poster. Please type the details", the fields stay empty, and the model is not called.
+- [AC-51] When the model does not answer within 10 seconds, the organizer sees "Could not read the poster. Please type the details", and no new row appears in `events`.
+- [AC-52] When the model answers with a 429 or another error, the organizer sees "Could not read the poster. Please type the details", and no new row appears in `events`.
+- [AC-53] When the model answers with something that is not valid JSON, the organizer sees "Could not read the poster. Please type the details", and no new row appears in `events`.
+- [AC-54] A member who tries to upload a poster sees "You do not have permission", and the model is not called.
+- [AC-55] An organizer who uploads a file that is not a PNG or JPEG, or is larger than 4 MB, sees "Upload a PNG or JPEG image under 4 MB", and the model is not called.
 
 ## Traceability
 <!-- Filled in from Exercise 3 onward: each AC id, and the test that names it. -->

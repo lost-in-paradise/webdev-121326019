@@ -1,5 +1,6 @@
 import express from 'express';
 import { getUpcomingEvents, signUpForEvent, getEventDetails, withdrawFromEvent, createEventService, updateEventService, cancelEventService, getEventSignups, removeMemberFromEvent } from '../services/events.js';
+import { readPosterService } from '../services/poster.js';
 
 const router = express.Router();
 
@@ -249,6 +250,25 @@ router.delete('/api/events/:id/signups/:memberId', async (req, res) => {
       err.message === 'Member is not signed up'
     ) {
       status = 409;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
+  }
+});
+
+router.post('/api/events/poster', async (req, res) => {
+  try {
+    const { image, mimeType } = req.body || {};
+    const result = await readPosterService(req.user.id, { image, mimeType });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'You do not have permission') {
+      status = 403;
+      errorMessage = err.message;
+    } else if (err.message === 'Upload a PNG or JPEG image under 4 MB') {
+      status = 400;
       errorMessage = err.message;
     }
     res.status(status).json({ success: false, error: errorMessage });

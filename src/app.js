@@ -17,6 +17,7 @@ if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable is missing');
 }
 
+app.use('/api/events/poster', express.json({ limit: '6mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
