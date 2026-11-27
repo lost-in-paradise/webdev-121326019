@@ -45,13 +45,10 @@ Club events.
 - There is exactly one admin, created by `npm run seed`; the app can't make anyone the admin or remove the admin role.
 
 ## The model feature
-<!-- Which model, which modality, and what it does for a user.
-     Name three things or the check fails: the input it receives, the output it produces,
-     and what happens when the model is slow, rate-limited or wrong. -->
-- Model: Gemini 2.5 Flash, vision, called from `services/poster.js` and nowhere else.
+- Model: Gemini 2.5 Flash, vision, called from `src/services/poster.js` and nowhere else.
 - Input: the poster image an organizer uploads, and nothing about any member.
 - Output: a suggested title, date and place, shown in the form for the organizer to correct.
-- When it fails: no key, a timeout or a 429 all leave the form empty with a note saying to
+- When it fails (fallback): no key, a timeout or a 429 all leave the form empty with a note saying to type it in - "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing save.
   type it in - "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing save.
 
 ## Auth
@@ -62,14 +59,14 @@ Club events.
 - Roles: member, organizer, admin. Every new account is a member. The role is read from `users` on every request, so a change takes effect on the next page load.
 
 ## MCP tools
-<!-- At least three tools your own MCP server exposes over this project's data.
-     Each tool calls the same service functions the HTTP API calls, so the same rules apply.
-     A description shorter than 20 characters is not a description. -->
+
 | Tool | What it does | Who may call it |
 | --- | --- | --- |
 | get_event | Return the title and description of one event by its id. Use it when asked what an event covers. | organizers, members, the admin |
 | list_upcoming_events | Return a list with a title, date, time, location and number of free places for the upcoming events, soonest first. Use it when asked for upcoming events. | organizers, members, the admin|
 | list_event_registrations | Return the e-mail and sign-up date of every member registered for an event, by event id. Use it when asked who has signed up for an event. | the event's organizer or the admin |
+
+The MCP server is `src/mcp/server.js` (run with `npm run mcp:club`, over stdio). It acts as one user, set by `MCP_USER_EMAIL` in `.env`; it looks that user up and passes their id to the same service functions the HTTP API calls, so the same permission rules apply.
 
 ## UI
 <!-- Stack, and the three or more screens. The graded checklist lives in docs/UI.md. -->
@@ -83,13 +80,20 @@ Screens:
 - `/admin/users` (admin only): table of users with e-mail, role and created date; a role dropdown and Save button per row; a "Users" link in the events page header, shown only to the admin.
 
 ## Architecture
-<!-- Exercise 3. One request traced through every layer, naming the file for each one,
-     plus one place where your own code does not match this layering. -->
+One request traced through the layers: a member clicks **Sign Up** on `/event-details`, which sends `POST /api/events/:id/signup`.
+
+1. `public/event-details.html` sends the request with `fetch`.
+2. `src/app.js` runs the session middleware and `requireAuth`, which loads the signed-in user from `users` and passes the request to the events router.
+3. `src/routes/events.js` checks that the id is a number, calls `signUpForEvent(userId, eventId)`, and turns the service's error message into a status code (403, 404, 400, 409).
+4. `src/services/events.js` holds the rules: only members may sign up; then, inside one transaction, the event must exist, not be cancelled or started, the member must not already be signed up, and there must be a free place.
+5. `src/data/db.js` runs `withTransaction` (BEGIN, COMMIT or ROLLBACK on one client).
+6. `src/data/events.js` locks the event row (`SELECT … FOR UPDATE`) so two sign-ups for the last place can't both succeed; `src/data/registrations.js` checks, counts and inserts the `registrations` row.
+7. PostgreSQL stores the row; the response is 201 "You are signed up", and the page shows it.
+
+**Where the code does not match the layering:** `requireAuth` in `src/app.js` calls `findUserById` from `src/data/users.js` directly, skipping the service layer.
+
 
 ## Acceptance criteria
-<!-- Every criterion carries an id. A test proves it by naming that id in its title, for example
-     test('AC-3 a booking that overlaps another is refused with 409', ...).
-     Say who acts, what they see, and what must be true in the database. -->
 
 ### Slice 1: sign-in and the upcoming events list
 - [AC-1] A visitor who opens `/events` without signing in lands on `/login` instead.
@@ -148,6 +152,12 @@ Screens:
 - [AC-42] A member with sign-ups who is promoted to organizer keeps their rows in `registrations`.
 - [AC-43] The "Users" link on `/events` is shown only to the admin, and a visitor who is not signed in and opens `/admin/users` lands on `/login`.
 
+### Slice 8: MCP tools
+- [AC-44] Calling `get_event` with the id of an existing event returns its title and description, and no rows change.
+- [AC-45] Calling `get_event` with an id that does not exist returns "Event not found".
+- [AC-46] Calling `list_upcoming_events` returns the same events, in the same order and with the same free places, as `/events`.
+- [AC-47] Calling `list_event_registrations` as the event's organizer or the admin returns the e-mail and sign-up date of every member with a `registrations` row for that event, and no password hash.
+- [AC-48] Calling `list_event_registrations` as a member or as an organizer who does not own the event returns "You do not have permission", and no rows change.
 
 ## Traceability
 <!-- Filled in from Exercise 3 onward: each AC id, and the test that names it. -->
@@ -190,4 +200,4 @@ The test file was missing `after(() => { pool.end(); })`, so `npm test` would ha
 ### Slice 7
 **Passed:** All criteria from Slice 7 have passed `npm test`: 48 passed.
 **What the agent missed, and what I did about it:**
-The plan followed the spec closely this time. Its tests would have compared the user list to a fixed number and not checked that other users stay unchanged; I had AC-34 compare against the real row count and AC-35 check a second user. The "Users" link on `/events` is client-side, so it is checked by hand, not by `npm test`. 
+The plan followed the spec closely this time. Its tests would have compared the user list to a fixed number and not checked that other users stay unchanged; I had AC-34 compare against the real row count and AC-35 check a second user. The "Users" link on `/events` is client-side, so it is checked by hand, not by `npm test`.
