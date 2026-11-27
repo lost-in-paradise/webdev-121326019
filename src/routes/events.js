@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUpcomingEvents, signUpForEvent } from '../services/events.js';
+import { getUpcomingEvents, signUpForEvent, getEventDetails, withdrawFromEvent } from '../services/events.js';
 
 const router = express.Router();
 
@@ -19,6 +19,25 @@ router.get('/api/events', async (req, res) => {
     res.json({ success: true, events });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+router.get('/api/events/:id', async (req, res) => {
+  const eventId = Number(req.params.id);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ success: false, error: 'Invalid event id' });
+  }
+  try {
+    const event = await getEventDetails(req.user.id, eventId);
+    res.json({ success: true, event });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'Event not found') {
+      status = 404;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
   }
 });
 
@@ -43,6 +62,34 @@ router.post('/api/events/:id/signup', async (req, res) => {
       status = 400;
       errorMessage = err.message;
     } else if (err.message === 'You are already signed up' || err.message === 'This event is full') {
+      status = 409;
+      errorMessage = err.message;
+    }
+    res.status(status).json({ success: false, error: errorMessage });
+  }
+});
+
+router.delete('/api/events/:id/signup', async (req, res) => {
+  const eventId = Number(req.params.id);
+  if (!Number.isInteger(eventId)) {
+    return res.status(400).json({ success: false, error: 'Invalid event id' });
+  }
+  try {
+    const result = await withdrawFromEvent(req.user.id, eventId);
+    res.json({ success: true, message: result.message });
+  } catch (err) {
+    let status = 500;
+    let errorMessage = 'Internal server error';
+    if (err.message === 'You do not have permission') {
+      status = 403;
+      errorMessage = err.message;
+    } else if (err.message === 'Event not found') {
+      status = 404;
+      errorMessage = err.message;
+    } else if (err.message === 'This event has already started') {
+      status = 400;
+      errorMessage = err.message;
+    } else if (err.message === 'You are not signed up') {
       status = 409;
       errorMessage = err.message;
     }

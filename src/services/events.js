@@ -1,6 +1,6 @@
-import { findUpcomingEvents, findEventByIdWithClient } from '../data/events.js';
+import { findUpcomingEvents, findEventByIdWithClient, findEventDetailsById } from '../data/events.js';
 import { findUserById } from '../data/users.js';
-import { findRegistrationWithClient, countRegistrationsWithClient, createRegistrationWithClient } from '../data/registrations.js';
+import { findRegistrationWithClient, countRegistrationsWithClient, createRegistrationWithClient, deleteRegistrationWithClient } from '../data/registrations.js';
 import { withTransaction } from '../data/db.js';
 
 export async function getUpcomingEvents() {
@@ -15,6 +15,24 @@ export async function getUpcomingEvents() {
     free_places: event.free_places,
     status: event.status
   }));
+}
+
+export async function getEventDetails(userId, eventId) {
+  const event = await findEventDetailsById(userId, eventId);
+  if (!event) {
+    throw new Error('Event not found');
+  }
+  return {
+    id: event.id,
+    title: event.title,
+    starts_at: event.starts_at,
+    location: event.location,
+    description: event.description,
+    capacity: event.capacity,
+    free_places: event.free_places,
+    status: event.status,
+    is_registered: event.is_registered
+  };
 }
 
 export async function signUpForEvent(userId, eventId) {
@@ -58,5 +76,31 @@ export async function signUpForEvent(userId, eventId) {
       }
       throw err;
     }
+  });
+}
+
+export async function withdrawFromEvent(userId, eventId) {
+  const user = await findUserById(userId);
+  if (!user || user.role === 'organizer' || user.role === 'admin') {
+    throw new Error('You do not have permission');
+  }
+
+  return await withTransaction(async (client) => {
+    const event = await findEventByIdWithClient(client, eventId);
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    if (new Date(event.starts_at) <= new Date()) {
+      throw new Error('This event has already started');
+    }
+
+    const existingRegistration = await findRegistrationWithClient(client, userId, eventId);
+    if (!existingRegistration) {
+      throw new Error('You are not signed up');
+    }
+
+    await deleteRegistrationWithClient(client, userId, eventId);
+    return { success: true, message: 'You have withdrawn' };
   });
 }
