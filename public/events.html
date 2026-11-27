@@ -39,9 +39,13 @@
             const card = document.createElement('div');
             card.className = 'event-card';
 
-            const titleEl = document.createElement('div');
+            const titleEl = document.createElement('a');
             titleEl.className = 'event-title';
             titleEl.textContent = ev.title;
+            titleEl.href = `/event-details?id=${ev.id}`;
+            titleEl.style.display = 'block';
+            titleEl.style.color = '#0066cc';
+            titleEl.style.textDecoration = 'none';
 
             const dateEl = document.createElement('div');
             const dateStr = new Date(ev.starts_at).toLocaleString();

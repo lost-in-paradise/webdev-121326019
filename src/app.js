@@ -74,6 +74,10 @@ app.get('/events', requireAuth, (req, res) => {
   res.sendFile(path.join(rootDir, 'public/events.html'));
 });
 
+app.get('/event-details', requireAuth, (req, res) => {
+  res.sendFile(path.join(rootDir, 'public/event-details.html'));
+});
+
 app.get('/', (req, res) => {
   if (req.session && req.session.userId) {
     return res.redirect('/events');

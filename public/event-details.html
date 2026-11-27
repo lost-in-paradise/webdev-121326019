@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Event Details - Club Events</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    .event-card { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 4px; }
+    .event-title { font-weight: bold; font-size: 1.3em; margin-bottom: 10px; }
+    .event-detail { margin-bottom: 8px; }
+    #message-area { margin-bottom: 15px; font-weight: bold; }
+    button, a.btn { margin-top: 12px; padding: 8px 16px; cursor: pointer; display: inline-block; text-decoration: none; background: #eee; color: #000; border: 1px solid #ccc; border-radius: 4px; }
+    button:hover, a.btn:hover { background: #ddd; }
+  </style>
+</head>
+<body>
+  <p><a href="/events" class="btn">&larr; Back to Events</a></p>
+  <h1>Event Details</h1>
+  <div id="message-area"></div>
+  <div id="event-container">Loading event details...</div>
+  <script>
+    async function loadEventDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const eventId = urlParams.get('id');
+      const container = document.getElementById('event-container');
+      const messageArea = document.getElementById('message-area');
+
+      if (!eventId) {
+        container.textContent = 'No event specified.';
+        return;
+      }
+
+      try {
+        const meRes = await fetch('/api/me');
+        const meData = await meRes.json();
+        const role = meData.success && meData.user ? meData.user.role : null;
+
+        const res = await fetch(`/api/events/${eventId}`);
+        const data = await res.json();
+
+        if (data.success && data.event) {
+          const ev = data.event;
+          container.textContent = '';
+
+          const card = document.createElement('div');
+          card.className = 'event-card';
+
+          const titleEl = document.createElement('div');
+          titleEl.className = 'event-title';
+          titleEl.textContent = ev.title;
+
+          const dateEl = document.createElement('div');
+          dateEl.className = 'event-detail';
+          dateEl.textContent = `Date & Time: ${new Date(ev.starts_at).toLocaleString()}`;
+
+          const locEl = document.createElement('div');
+          locEl.className = 'event-detail';
+          locEl.textContent = `Location: ${ev.location}`;
+
+          const descEl = document.createElement('div');
+          descEl.className = 'event-detail';
+          descEl.textContent = `Description: ${ev.description}`;
+
+          const freeEl = document.createElement('div');
+          freeEl.className = 'event-detail';
+          freeEl.textContent = `Free Places: ${ev.free_places}`;
+
+          const regStatusEl = document.createElement('div');
+          regStatusEl.className = 'event-detail';
+          regStatusEl.textContent = ev.is_registered ? 'You are signed up' : 'You are not signed up';
+
+          const statusEl = document.createElement('div');
+          statusEl.className = 'event-detail';
+          if (ev.status === 'cancelled') {
+            statusEl.textContent = 'Status: Cancelled';
+            statusEl.style.color = 'red';
+          }
+
+          card.appendChild(titleEl);
+          card.appendChild(dateEl);
+          card.appendChild(locEl);
+          card.appendChild(descEl);
+          card.appendChild(freeEl);
+          card.appendChild(regStatusEl);
+          if (ev.status === 'cancelled') {
+            card.appendChild(statusEl);
+          }
+
+          if (role === 'member') {
+            const actionBtn = document.createElement('button');
+            if (ev.is_registered) {
+              actionBtn.textContent = 'Withdraw';
+              actionBtn.addEventListener('click', async () => {
+                actionBtn.disabled = true;
+                try {
+                  const delRes = await fetch(`/api/events/${ev.id}/signup`, { method: 'DELETE' });
+                  const delData = await delRes.json();
+                  if (delRes.ok && delData.success) {
+                    messageArea.textContent = delData.message || 'You have withdrawn';
+                    loadEventDetails();
+                  } else {
+                    messageArea.textContent = delData.error || 'Error withdrawing';
+                    actionBtn.disabled = false;
+                  }
+                } catch (err) {
+                  messageArea.textContent = 'Error withdrawing';
+                  actionBtn.disabled = false;
+                }
+              });
+            } else {
+              actionBtn.textContent = 'Sign Up';
+              actionBtn.addEventListener('click', async () => {
+                actionBtn.disabled = true;
+                try {
+                  const postRes = await fetch(`/api/events/${ev.id}/signup`, { method: 'POST' });
+                  const postData = await postRes.json();
+                  if (postRes.ok && postData.success) {
+                    messageArea.textContent = postData.message || 'You are signed up';
+                    loadEventDetails();
+                  } else {
+                    messageArea.textContent = postData.error || 'Error signing up';
+                    actionBtn.disabled = false;
+                  }
+                } catch (err) {
+                  messageArea.textContent = 'Error signing up';
+                  actionBtn.disabled = false;
+                }
+              });
+            }
+            card.appendChild(actionBtn);
+          }
+
+          container.appendChild(card);
+        } else {
+          container.textContent = data.error || 'Failed to load event details.';
+        }
+      } catch (err) {
+        container.textContent = 'Error loading event details.';
+      }
+    }
+
+    loadEventDetails();
+  </script>
+</body>
+</html>
