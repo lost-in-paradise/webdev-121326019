@@ -10,6 +10,8 @@
     .event-title { font-weight: bold; font-size: 1.1em; }
     #message-area { margin-bottom: 15px; font-weight: bold; }
     button { margin-top: 8px; padding: 6px 12px; cursor: pointer; }
+    a.btn { margin-top: 8px; margin-right: 8px; padding: 6px 12px; cursor: pointer; display: inline-block; text-decoration: none; background: #eee; color: #000; border: 1px solid #ccc; border-radius: 4px; }
+    a.btn:hover { background: #ddd; }
   </style>
 </head>
 <body>
@@ -24,17 +26,27 @@
       try {
         const meRes = await fetch('/api/me');
         const meData = await meRes.json();
-        const role = meData.success && meData.user ? meData.user.role : null;
+        const role = meData.success && meData.user ? meData.user.role : (meData.role || null);
 
         const organizerActions = document.getElementById('organizer-actions');
         organizerActions.textContent = '';
         if (role === 'organizer' || role === 'admin') {
           const createBtn = document.createElement('button');
           createBtn.textContent = 'Create event';
+          createBtn.style.marginRight = '8px';
           createBtn.addEventListener('click', () => {
             window.location.href = '/event';
           });
           organizerActions.appendChild(createBtn);
+        }
+
+        if (role === 'admin') {
+          const usersLink = document.createElement('a');
+          usersLink.id = 'users-link';
+          usersLink.href = '/admin/users';
+          usersLink.textContent = 'Users';
+          usersLink.className = 'btn';
+          organizerActions.appendChild(usersLink);
         }
 
         const res = await fetch('/api/events');

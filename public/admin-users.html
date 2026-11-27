@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Management - Club Events</title>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+    #message-area { margin-bottom: 15px; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f5f5f5; }
+    button, a.btn { margin-top: 12px; margin-right: 8px; padding: 8px 16px; cursor: pointer; display: inline-block; text-decoration: none; background: #eee; color: #000; border: 1px solid #ccc; border-radius: 4px; }
+    button:hover, a.btn:hover { background: #ddd; }
+    .btn-save { margin-top: 0; padding: 4px 8px; cursor: pointer; }
+    select { padding: 4px; margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <p><a id="back-link" href="/events" class="btn">&larr; Back to events</a></p>
+  <h1>User Management</h1>
+  <div id="message-area"></div>
+  <div id="users-container">Loading users...</div>
+
+  <script>
+    async function loadUsers() {
+      const container = document.getElementById('users-container');
+      const messageArea = document.getElementById('message-area');
+
+      try {
+        const res = await fetch('/api/admin/users');
+        if (res.status === 403) {
+          messageArea.textContent = 'You do not have permission';
+          container.textContent = '';
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          messageArea.textContent = data.error || 'Failed to load users.';
+          container.textContent = '';
+          return;
+        }
+
+        container.textContent = '';
+        const users = data.users || [];
+
+        if (users.length === 0) {
+          const emptyP = document.createElement('p');
+          emptyP.textContent = 'No users found.';
+          container.appendChild(emptyP);
+          return;
+        }
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+
+        const thEmail = document.createElement('th');
+        thEmail.textContent = 'E-mail';
+        headerRow.appendChild(thEmail);
+
+        const thRole = document.createElement('th');
+        thRole.textContent = 'Role';
+        headerRow.appendChild(thRole);
+
+        const thDate = document.createElement('th');
+        thDate.textContent = 'Created Date';
+        headerRow.appendChild(thDate);
+
+        const thAction = document.createElement('th');
+        thAction.textContent = 'Actions';
+        headerRow.appendChild(thAction);
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        users.forEach(user => {
+          const row = document.createElement('tr');
+
+          const tdEmail = document.createElement('td');
+          tdEmail.textContent = user.email;
+          row.appendChild(tdEmail);
+
+          const tdRole = document.createElement('td');
+          tdRole.textContent = user.role;
+          row.appendChild(tdRole);
+
+          const tdDate = document.createElement('td');
+          tdDate.textContent = new Date(user.created_at).toLocaleString();
+          row.appendChild(tdDate);
+
+          const tdAction = document.createElement('td');
+          if (user.role !== 'admin') {
+            const selectEl = document.createElement('select');
+
+            const optMember = document.createElement('option');
+            optMember.value = 'member';
+            optMember.textContent = 'member';
+            selectEl.appendChild(optMember);
+
+            const optOrganizer = document.createElement('option');
+            optOrganizer.value = 'organizer';
+            optOrganizer.textContent = 'organizer';
+            selectEl.appendChild(optOrganizer);
+
+            selectEl.value = user.role;
+
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn-save';
+            saveBtn.textContent = 'Save';
+            saveBtn.addEventListener('click', async () => {
+              saveBtn.disabled = true;
+              try {
+                const putRes = await fetch(`/api/admin/users/${user.id}/role`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ role: selectEl.value })
+                });
+                const putData = await putRes.json();
+                if (putRes.ok && putData.success) {
+                  messageArea.textContent = putData.message || 'Role updated';
+                } else {
+                  messageArea.textContent = putData.error || 'Failed to update role';
+                }
+                loadUsers();
+              } catch (err) {
+                messageArea.textContent = 'Error updating role';
+                saveBtn.disabled = false;
+              }
+            });
+
+            tdAction.appendChild(selectEl);
+            tdAction.appendChild(saveBtn);
+          }
+
+          row.appendChild(tdAction);
+          tbody.appendChild(row);
+        });
+
+        table.appendChild(tbody);
+        container.appendChild(table);
+      } catch (err) {
+        messageArea.textContent = 'Error loading users.';
+        container.textContent = '';
+      }
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
