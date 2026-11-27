@@ -68,3 +68,10 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: plan reviewed; step 1 committed at 48 passing.
 - Went wrong: tests planned a fixed user count and no check on other users (fixed before writing); an unrequested change to the role line in events.html (kept, harmless).
 - Changed by hand: nothing.
+
+## 2026-11-27 · slice 8 creation
+- Goal: MCP server with the three tools from SPEC.md, reusing the service layer (AC-44 to 48).
+- Delegated: plan, src/mcp/tools.js, src/mcp/server.js, mcp:club script, tests.
+- Checkpoints: plan reviewed twice.
+- Went wrong: dotenv log on stdout (fixed with DOTENV_CONFIG_QUIET); weak tests in the first plan (fixed before writing).
+- Changed by hand: added MCP_USER_EMAIL to .env.

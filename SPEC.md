@@ -201,3 +201,8 @@ The test file was missing `after(() => { pool.end(); })`, so `npm test` would ha
 **Passed:** All criteria from Slice 7 have passed `npm test`: 48 passed.
 **What the agent missed, and what I did about it:**
 The plan followed the spec closely this time. Its tests would have compared the user list to a fixed number and not checked that other users stay unchanged; I had AC-34 compare against the real row count and AC-35 check a second user. The "Users" link on `/events` is client-side, so it is checked by hand, not by `npm test`.
+
+### Slice 8
+**Passed:** All criteria from Slice 8 have passed `npm test`: 53 passed.
+**What the agent missed, and what I did about it:**
+The spec did not say how the MCP server knows who is calling; I added `MCP_USER_EMAIL` to the spec. The plan missed that dotenv prints a line to stdout, which would break the MCP protocol; I had it silenced with `DOTENV_CONFIG_QUIET=true` in the `mcp:club` script. The first plan's tests only checked formatting; I had AC-46 compare with `getUpcomingEvents()`, AC-47 test both the organizer and the admin, and AC-48 test both a member and another organizer.
