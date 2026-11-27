@@ -8,16 +8,23 @@
     body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
     .event-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 4px; }
     .event-title { font-weight: bold; font-size: 1.1em; }
+    #message-area { margin-bottom: 15px; font-weight: bold; }
+    button { margin-top: 8px; padding: 6px 12px; cursor: pointer; }
   </style>
 </head>
 <body>
   <h1>Upcoming Events</h1>
+  <div id="message-area"></div>
   <div id="events-container">Loading events...</div>
   <button id="logout-btn" style="margin-top: 20px;">Log Out</button>
   <script>
     async function loadEvents() {
       const container = document.getElementById('events-container');
       try {
+        const meRes = await fetch('/api/me');
+        const meData = await meRes.json();
+        const role = meData.success && meData.user ? meData.user.role : null;
+
         const res = await fetch('/api/events');
         const data = await res.json();
         if (data.success && data.events) {
@@ -55,6 +62,31 @@
             if (ev.status === 'cancelled') {
               card.appendChild(statusEl);
             }
+
+            if (role === 'member') {
+              const signUpBtn = document.createElement('button');
+              signUpBtn.textContent = 'Sign Up';
+              signUpBtn.addEventListener('click', async () => {
+                signUpBtn.disabled = true;
+                const messageArea = document.getElementById('message-area');
+                try {
+                  const signupRes = await fetch(`/api/events/${ev.id}/signup`, { method: 'POST' });
+                  const signupData = await signupRes.json();
+                  if (signupRes.ok && signupData.success) {
+                    messageArea.textContent = signupData.message || 'You are signed up';
+                    loadEvents();
+                  } else {
+                    messageArea.textContent = signupData.error || signupData.message || 'Error signing up';
+                    signUpBtn.disabled = false;
+                  }
+                } catch (err) {
+                  messageArea.textContent = 'Error signing up';
+                  signUpBtn.disabled = false;
+                }
+              });
+              card.appendChild(signUpBtn);
+            }
+
             container.appendChild(card);
           });
         } else {
