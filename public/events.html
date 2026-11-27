@@ -15,6 +15,7 @@
 <body>
   <h1>Upcoming Events</h1>
   <div id="message-area"></div>
+  <div id="organizer-actions" style="margin-bottom: 15px;"></div>
   <div id="events-container">Loading events...</div>
   <button id="logout-btn" style="margin-top: 20px;">Log Out</button>
   <script>
@@ -24,6 +25,17 @@
         const meRes = await fetch('/api/me');
         const meData = await meRes.json();
         const role = meData.success && meData.user ? meData.user.role : null;
+
+        const organizerActions = document.getElementById('organizer-actions');
+        organizerActions.textContent = '';
+        if (role === 'organizer' || role === 'admin') {
+          const createBtn = document.createElement('button');
+          createBtn.textContent = 'Create event';
+          createBtn.addEventListener('click', () => {
+            window.location.href = '/event';
+          });
+          organizerActions.appendChild(createBtn);
+        }
 
         const res = await fetch('/api/events');
         const data = await res.json();

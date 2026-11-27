@@ -74,6 +74,10 @@ app.get('/events', requireAuth, (req, res) => {
   res.sendFile(path.join(rootDir, 'public/events.html'));
 });
 
+app.get('/event', requireAuth, (req, res) => {
+  res.sendFile(path.join(rootDir, 'public/event.html'));
+});
+
 app.get('/event-details', requireAuth, (req, res) => {
   res.sendFile(path.join(rootDir, 'public/event-details.html'));
 });
