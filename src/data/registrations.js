@@ -23,3 +23,11 @@ export async function countRegistrationsWithClient(client, eventId) {
   );
   return result.rows[0].count;
 }
+
+export async function deleteRegistrationWithClient(client, userId, eventId) {
+  const result = await client.query(
+    'DELETE FROM registrations WHERE user_id = $1 AND event_id = $2 RETURNING *',
+    [userId, eventId]
+  );
+  return result.rows[0] || null;
+}
