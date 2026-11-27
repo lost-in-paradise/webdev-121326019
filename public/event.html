@@ -8,11 +8,12 @@
     body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input[type="text"], input[type="date"], input[type="time"], input[type="number"], textarea {
+    input[type="text"], input[type="date"], input[type="time"], input[type="number"], input[type="file"], textarea {
       width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
     }
     textarea { height: 100px; }
     #message-area { margin-bottom: 15px; font-weight: bold; color: red; }
+    #poster-status { margin-top: 5px; font-weight: bold; color: #555; }
     button, .btn { padding: 8px 16px; cursor: pointer; margin-right: 10px; }
     button#cancel-btn { background: #ffdddd; }
     a { display: inline-block; margin-top: 15px; text-decoration: none; color: #0066cc; }
@@ -21,6 +22,13 @@
 <body>
   <h1 id="heading-title">Create Event</h1>
   <div id="message-area"></div>
+
+  <div id="poster-upload-section" class="form-group" style="display: none;">
+    <label for="poster-input">Upload poster</label>
+    <input type="file" id="poster-input" accept="image/png, image/jpeg">
+    <div id="poster-status"></div>
+  </div>
+
   <form id="event-form">
     <div class="form-group">
       <label for="title">Title</label>
@@ -54,6 +62,90 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('id');
+
+    // Check user role: show "Upload poster" only for organizers and the admin
+    fetch('/api/me')
+      .then(res => res.json())
+      .then(data => {
+        const role = data.success && data.user ? data.user.role : (data.role || null);
+        if (role === 'organizer' || role === 'admin') {
+          document.getElementById('poster-upload-section').style.display = 'block';
+        }
+      })
+      .catch(() => {});
+
+    // Poster file selection handler
+    document.getElementById('poster-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const messageArea = document.getElementById('message-area');
+      const posterStatus = document.getElementById('poster-status');
+      messageArea.textContent = '';
+      posterStatus.textContent = '';
+
+      const allowedTypes = ['image/png', 'image/jpeg'];
+      if (!allowedTypes.includes(file.type) || file.size > 4 * 1024 * 1024) {
+        messageArea.textContent = 'Upload a PNG or JPEG image under 4 MB';
+        e.target.value = '';
+        return;
+      }
+
+      posterStatus.textContent = 'Reading poster...';
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const resultStr = reader.result;
+          const base64Index = resultStr.indexOf(',');
+          const base64Data = base64Index !== -1 ? resultStr.slice(base64Index + 1) : resultStr;
+          const mimeType = file.type;
+
+          const res = await fetch('/api/events/poster', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Data, mimeType })
+          });
+          const data = await res.json();
+          posterStatus.textContent = '';
+
+          if (!res.ok || !data.success) {
+            messageArea.textContent = data.error || 'Failed to read poster';
+            return;
+          }
+
+          if (data.title) {
+            document.getElementById('title').value = data.title;
+          }
+          if (data.starts_at) {
+            const startsAt = new Date(data.starts_at);
+            if (!isNaN(startsAt.getTime())) {
+              const year = startsAt.getFullYear();
+              const month = String(startsAt.getMonth() + 1).padStart(2, '0');
+              const day = String(startsAt.getDate()).padStart(2, '0');
+              document.getElementById('date').value = `${year}-${month}-${day}`;
+              document.getElementById('time').value = startsAt.toTimeString().slice(0, 5);
+            }
+          }
+          if (data.location) {
+            document.getElementById('location').value = data.location;
+          }
+          if (data.note) {
+            messageArea.textContent = data.note;
+          } else if (data.title || data.starts_at || data.location) {
+            posterStatus.textContent = 'Poster details suggested. Please review and save.';
+          }
+        } catch (err) {
+          posterStatus.textContent = '';
+          messageArea.textContent = 'Error uploading poster';
+        }
+      };
+      reader.onerror = () => {
+        posterStatus.textContent = '';
+        messageArea.textContent = 'Error reading file';
+      };
+      reader.readAsDataURL(file);
+    });
 
     if (eventId) {
       document.getElementById('page-title').textContent = 'Edit Event - Club Events';

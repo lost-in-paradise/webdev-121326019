@@ -75,3 +75,10 @@ One entry per agent session, newest at the bottom. Be honest: what went wrong is
 - Checkpoints: plan reviewed twice.
 - Went wrong: dotenv log on stdout (fixed with DOTENV_CONFIG_QUIET); weak tests in the first plan (fixed before writing).
 - Changed by hand: added MCP_USER_EMAIL to .env.
+
+## 2026-11-27 · slice 9 creation
+- Goal: read an event poster with Gemini vision and fill the event form, with timeout and fallback (AC-49 to 55).
+- Delegated: plan, src/services/poster.js, the route, tests with a stub, the upload field on /event.
+- Checkpoints: plan reviewed; step 1 committed at 60 passing; step 2 UI committed after a browser test.
+- Went wrong: timeout stub ignored the abort signal, no size check in the browser, model fields not validated (all fixed before writing); gemini-2.5-flash returned 404 for new users, found with a manual API call.
+- Changed by hand: added GEMINI_API_KEY and GEMINI_MODEL to .env.

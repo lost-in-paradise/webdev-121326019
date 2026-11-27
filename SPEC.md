@@ -45,7 +45,7 @@ Club events.
 - There is exactly one admin, created by `npm run seed`; the app can't make anyone the admin or remove the admin role.
 
 ## The model feature
-- Model: Gemini 2.5 Flash (vision), called only from `src/services/poster.js` with plain `fetch`; the key is `GEMINI_API_KEY` in `.env`.
+- Model: Gemini 3.8 Flash (vision), called only from `src/services/poster.js` with plain `fetch`; the key is `GEMINI_API_KEY` in `.env`.
 - Input: one PNG or JPEG poster image (max 4 MB) uploaded by an organizer or the admin on `/event`, sent to `POST /api/events/poster`; nothing about any member is sent.
 - Output: a suggested title, start date and time, and location, filled into the form for the organizer to correct.
 - When it fails (fallback): no key, no answer within 10 seconds (timeout), a 429 or other error, or an answer that is not valid JSON all return empty fields and the note "Could not read the poster. Please type the details". Nothing is ever saved without the organizer pressing Save.
@@ -214,3 +214,8 @@ The plan followed the spec closely this time. Its tests would have compared the 
 **Passed:** All criteria from Slice 8 have passed `npm test`: 53 passed.
 **What the agent missed, and what I did about it:**
 The spec did not say how the MCP server knows who is calling; I added `MCP_USER_EMAIL` to the spec. The plan missed that dotenv prints a line to stdout, which would break the MCP protocol; I had it silenced with `DOTENV_CONFIG_QUIET=true` in the `mcp:club` script. The first plan's tests only checked formatting; I had AC-46 compare with `getUpcomingEvents()`, AC-47 test both the organizer and the admin, and AC-48 test both a member and another organizer.
+
+### Slice 9
+**Passed:** All criteria from Slice 9 have passed `npm test`: 60 passed. 
+**What the agent missed, and what I did about it:**
+The spec first left it open whether the admin can use the poster feature; I decided yes and changed AC-49 and AC-54. The plan's timeout test used a stub that ignored the abort signal and could hang; I had the stub listen to the signal. It did not check the file size in the browser, so a large photo would hit the 6 MB body limit with an unclear error; I had a check added before upload. It also passed the model's fields through without checking them; I had non-strings and invalid dates turned into empty fields. In the browser test the poster always showed the fallback note: Gemini 2.5 Flash is no longer available to new users, so I switched the model to `gemini-3.8-flash`.
